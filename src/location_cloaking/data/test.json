@@ -1,0 +1,19 @@
+[
+  {
+    "mode": "attach",
+    "ids": [
+      24,
+      25
+    ],
+    "groups": [
+      1
+    ],
+    "policy": {
+      "max-level": 3
+    },
+    "vicinity": {
+      "type": "VicinityCircleShape",
+      "radius": 10
+    }
+  }
+]
