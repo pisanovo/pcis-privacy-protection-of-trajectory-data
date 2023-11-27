@@ -1,0 +1,15 @@
+services:
+  location_based_service:
+    build: .
+    volumes:
+      - "./modules/location_based_service/:/code"
+  echo_agent:
+    build: .
+    volumes:
+      - "./modules/echo_agent/:/code"
+  client:
+    build: .
+    ports:
+      - "5000:5000"
+    volumes:
+      - "./modules/client/:/code"
