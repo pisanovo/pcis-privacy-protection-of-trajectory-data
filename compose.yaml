@@ -13,3 +13,5 @@ services:
       - "5000:5000"
     volumes:
       - "./modules/client/:/code"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"

@@ -13,6 +13,11 @@ def get_health():
     return json.dumps({ "status": "ok" })
   return json.dumps({ "status": "unhealthy" })
 
+# Allows clients to make an anonymous requests
+@api.route('/anonymous_resource', methods=['GET'])
+def get_anonymous_resource():
+  # TODO: Add actual request and don't just log
+  return json.dumps({ "status": "ok" })
 
 if __name__ == '__main__':
     api.run()
