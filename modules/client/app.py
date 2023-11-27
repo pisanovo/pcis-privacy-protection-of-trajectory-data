@@ -3,11 +3,15 @@ import requests
 
 api = Flask(__name__)
 
-@api.route('/hello', methods=['GET'])
-def get_hello():
-  response = requests.get('http://echo_agent:5000/hello')
-  msg = response.json()
-  return json.dumps(msg)
+# Healthcheck. Responds with { "status": "ok" } if it, and all 
+# services down the line are ok.
+@api.route('/health', methods=['GET'])
+def get_health():
+  response = requests.get('http://echo_agent:5000/health')
+  status = response.json()['status']
+  if status == "ok":
+    return json.dumps({ "status": "ok" })
+  return json.dumps({ "status": "unhealthy" })
 
 if __name__ == '__main__':
     api.run()
