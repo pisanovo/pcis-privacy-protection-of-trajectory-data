@@ -114,15 +114,15 @@ async def observe(websocket):
         data.observers.remove(websocket)
 
 
-async def handler(websocket):
-    message = await websocket.recv()
-
+async def handler(websocket, path):
     try:
+        if path == "/observe" and Config.ENVIRONMENT == "dev":
+            await observe(websocket)
+
+        message = await websocket.recv()
         init_msg = MsgClientLSInit.from_json(message)
 
-        if init_msg.mode == "observer" and Config.ENVIRONMENT == "dev":
-            await observe(websocket)
-        elif init_msg.mode == "user":
+        if init_msg.mode == "user":
             await use(websocket, init_msg)
         else:
             raise ValueError

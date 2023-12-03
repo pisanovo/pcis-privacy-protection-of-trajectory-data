@@ -12,7 +12,14 @@ class Message(JSONWizard):
     # type: str
     pass
 
+
 @dataclass
 class MsgVsVcAgentLocationUpd(Message):
     data: List[CarlaAgentData]
-    type = "IncrementalUpdate"
+    type = "LocationUpdate"
+
+
+@dataclass
+class MsgVsVcAgents(Message):
+    data: List[str]
+    type = "Agents"

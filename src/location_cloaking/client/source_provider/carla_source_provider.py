@@ -1,6 +1,11 @@
 import re
+import time
+
 import carla
 from typing import List
+
+from carla import World
+
 from location_cloaking.client.source_provider.source_provider import SourceProvider
 from location_cloaking.client.model.data import Position, ClientInstance, VicinityCircleShape, Policy, VicinityShape
 
@@ -11,10 +16,14 @@ class CarlaSourceProvider(SourceProvider):
         from location_cloaking.config import CarlaConfig
         self._client = carla.Client(CarlaConfig.HOST, CarlaConfig.PORT)
         self._client.set_timeout(CarlaConfig.TIMEOUT)
-        self._carla_world = self._client.get_world()
+        self._carla_world: World = self._client.get_world()
         self._carla_id = source_instance_data["id"]
 
     def get_latest_position(self) -> Position:
+        # In synchronous mode getting actors might return nothing until a tick passed
+        while len(self._carla_world.get_actors()) == 0:
+            pass
+
         actor: carla.Actor = self._carla_world.get_actors().find(self._carla_id)
         actor_position: carla.Location = actor.get_location()
 

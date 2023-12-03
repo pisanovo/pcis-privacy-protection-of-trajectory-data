@@ -24,6 +24,10 @@ class GranularityPlaneDimensions:
     x_max: float
     y_min: float
     y_max: float
+    lon_min: float
+    lon_max: float
+    lat_min: float
+    lat_max: float
 
 
 #
