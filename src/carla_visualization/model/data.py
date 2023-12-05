@@ -12,6 +12,8 @@ class Location:
 class CarlaAgentData:
     id: str
     location: Location
+    # One Carla unit to meters on a map for vehicle
+    great_circle_distance_factor: float
 
 
 @dataclass

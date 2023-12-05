@@ -2,17 +2,29 @@ from location_cloaking.client.model.data import VicinityCircleShape
 from location_cloaking.model.data import Position
 
 
-def point_in_rectangle(position: Position, x_min, x_max, y_min, y_max):
+def is_point_in_rectangle(position: Position, x_min, x_max, y_min, y_max):
     return x_min <= position.x <= x_max and y_min <= position.y <= y_max
 
 
-def grid_intersect_circle(position: Position,
-                          vicinity_shape: VicinityCircleShape,
-                          grid_seg_start: Position,
-                          grid_seg_end: Position):
+def is_grid_intersecting_circle(position: Position,
+                                vicinity_shape: VicinityCircleShape,
+                                grid_seg_start: Position,
+                                grid_seg_end: Position):
+    """
+    Checks whether a grid cell intersects the client vicinity shape given the client position (vicinity is always drawn
+    around the client position)
+
+    :param position: Any position on the Carla map
+    :param vicinity_shape: The client vicinity shape
+    :param grid_seg_start: Grid starting point
+    :param grid_seg_end: Grid ending point, together with the grid starting point this specifies the grid boundaries
+
+    :return: Answer whether the requested grid intersects the client vicinity shape
+    """
     # Check if the foot of the perpendicular form position (p) to the line falls between the segment (x1, y1) to
     # (x2, y2) and if the foot is at most radius (r) far from p. Otherwise, try to see if either (x1, y1) or
     # (x2, y2) are at most r far from p
+    # Here we only consider a simplified scenario since we assume grids that are aligned, i.e., not rotated
 
     if grid_seg_start.x == grid_seg_end.x:
         x = grid_seg_start.x

@@ -19,10 +19,23 @@ data = LocationServerInstance()
 
 
 async def error(websocket, cls, **kwargs):
+    """
+    Send error message from specified message class type and provided arguments
+
+    :param websocket: User/observer websocket connection
+    :param cls: Class representing message type
+    :param kwargs: Arguments provided for the corresponding message type
+    """
     await websocket.send(cls(**kwargs).to_json())
 
 
 async def use(websocket, init_msg: MsgClientLSInit):
+    """
+    Server logic handling user connections
+
+    :param websocket: User websocket connection
+    :param init_msg: Message containing user hello
+    """
     if init_msg.alias is None:
         init_msg.alias = []
 
@@ -38,6 +51,7 @@ async def use(websocket, init_msg: MsgClientLSInit):
     )
 
     try:
+        # Create new user entry
         data.users.append(user)
         # Send confirmation together with plane data
         await websocket.send(MsgLSClientInitComplete(
@@ -49,12 +63,12 @@ async def use(websocket, init_msg: MsgClientLSInit):
             event = json.loads(message)
 
             if event["type"] == "MsgUserLSIncUpd":
-                # print(message)
                 upd = MsgUserLSIncUpd.from_json(message)
                 await on_message_received(user, upd, data)
             elif event["type"] == "MsgUserLSGroupJoin":
                 join_msg = MsgUserLSGroupJoin.from_json(message)
 
+                # Received invalid group id
                 if join_msg.id < 0:
                     raise ValueError
 
@@ -64,6 +78,7 @@ async def use(websocket, init_msg: MsgClientLSInit):
                 group = data.groups[join_msg.id]
 
                 if user in group.users:
+                    # User has already joined the group
                     await error(websocket, MsgErrorGroupAlreadyJoined)
                 else:
                     user.groups.append(group)
@@ -74,6 +89,7 @@ async def use(websocket, init_msg: MsgClientLSInit):
                     group = data.groups[leave_msg.id]
 
                     if user not in group.users:
+                        # User never joined the group
                         await error(websocket, MsgErrorNotGroupMember)
                     else:
                         user.groups.remove(group)
@@ -103,6 +119,11 @@ async def use(websocket, init_msg: MsgClientLSInit):
 
 
 async def observe(websocket):
+    """
+    Server logic to handle observer connections. Observer example: Carla visualization frontend
+
+    :param websocket: Observer websocket connection
+    """
     try:
         data.observers.append(websocket)
         # Send confirmation together with plane data
@@ -115,6 +136,12 @@ async def observe(websocket):
 
 
 async def handler(websocket, path):
+    """
+    Handles incoming websocket connections by identifying if a user or observer opened the connection
+
+    :param websocket: User or observer websocket connection
+    :param path: The requested resource path
+    """
     try:
         if path == "/observe" and Config.ENVIRONMENT == "dev":
             await observe(websocket)
@@ -134,6 +161,7 @@ async def handler(websocket, path):
 
 async def main():
     try:
+        # Fetch plane dimensions needed by users and observers from the provider
         provider = LocationServerConfig.PLANE_DATA_PROVIDER
         plane_dimensions = provider().get_plane_dimensions()
     except:
@@ -153,7 +181,7 @@ async def main():
 if __name__ == "__main__":
     try:
         asyncio.run(main())
-    # except Exception as e:
-    #     traceback.print_exc()
+    except:
+        traceback.print_exc()
     finally:
         logger.info("Program exit! Bye.")

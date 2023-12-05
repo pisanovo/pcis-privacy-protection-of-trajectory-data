@@ -1,13 +1,10 @@
 import random
 import time
 from typing import List
-
 import carla
 from carla import Transform, Map, World, Actor
 from haversine import haversine
-
 from location_cloaking.config import CarlaConfig
-from location_cloaking.utils.map.agents.navigation.basic_agent import BasicAgent
 from location_cloaking.utils.map.agents.navigation.behavior_agent import BehaviorAgent
 from location_cloaking.utils.map.agents.navigation.global_route_planner import GlobalRoutePlanner
 
@@ -112,12 +109,15 @@ try:
 
         vehicles.append((actor, agent))
 
+    i = 0
     while True:
-        start = time.time()
+        start_tick_time = time.time()
         world.tick()
-        end = time.time()
-        print("TICK TIME", end - start)
+        end_tick_time = time.time()
+
         start2 = time.time()
+        get_control_time = 0
+
         for vehicle in vehicles:
             actor, agent = vehicle
 
@@ -131,11 +131,22 @@ try:
                         keep_trying = False
                     except Exception as e:
                         pass
-            # start = time.time()
-            actor.apply_control(agent.run_step())
-        end2 = time.time()
-        print("ALL CONTROL TIME", end2 - start2)
 
+            start_get_control = time.time()
+            control = agent.run_step()
+            end_get_control = time.time()
+            get_control_time += end_get_control - start_get_control
+
+            actor.apply_control(control)
+
+        end2 = time.time()
+
+        if end2 - start2 > 1.0:
+            print()
+            print(f"{i}: TICK TIME", end_tick_time - start_tick_time)
+            print(f"{i}: GET CONTROL TIME", get_control_time)
+            print(f"{i}: ALL CONTROL TIME", end2 - start2)
+            i += 1
 finally:
     for vehicle in vehicles:
         actor, agent = vehicle

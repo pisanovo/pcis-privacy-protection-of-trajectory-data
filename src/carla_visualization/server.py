@@ -1,10 +1,10 @@
 import asyncio
-import functools
-import json
 import logging
 import carla
 import websockets
 from typing import List
+import pyproj
+from carla import Map
 from carla_visualization.model.data import CarlaData, Location, CarlaAgentData
 from carla_visualization.model.messages import MsgVsVcAgentLocationUpd, MsgVsVcAgents
 from location_cloaking.config import LocationServerConfig, CarlaConfig
@@ -15,7 +15,7 @@ logger = setup_logger(__name__, level=logging.DEBUG)
 g_client = carla.Client(CarlaConfig.HOST, CarlaConfig.PORT)
 g_client.set_timeout(CarlaConfig.TIMEOUT)
 g_carla_world = g_client.get_world()
-g_carla_map = g_carla_world.get_map()
+g_carla_map: Map = g_carla_world.get_map()
 
 g_carla_data = CarlaData(agents={})
 g_carla_position_websockets = []
@@ -27,23 +27,33 @@ async def carla_position_sync(actor_data: CarlaData):
         vehicle_actors = g_carla_world.get_actors().filter("vehicle.*")
         updated_actors: List[CarlaAgentData] = []
         for actor in vehicle_actors:
-            carla_location = actor.get_location()
+            carla_location: carla.Location = actor.get_location()
+            shifted_loc = carla.Location(x=carla_location.x - 1, y = carla_location.y, z = carla_location.z)
+
+            geo_location_pos = g_carla_map.transform_to_geolocation(carla_location)
+            geo_position_mod = g_carla_map.transform_to_geolocation(shifted_loc)
+
+            g = pyproj.Geod(ellps='WGS84')
+            _, _, dist = g.inv(geo_location_pos.longitude, geo_location_pos.latitude, geo_position_mod.longitude, geo_position_mod.latitude)
+
             if actor.id in actor_data.agents:
                 agent_data = actor_data.agents[actor.id]
                 actor_location_data = agent_data.location
                 if actor_location_data.x != carla_location.x or actor_location_data.y != carla_location.y:
                     geo_location = g_carla_map.transform_to_geolocation(carla_location)
                     agent_data.location = Location(x=geo_location.latitude, y=geo_location.longitude)
+                    agent_data.great_circle_distance_factor = dist
+
                     updated_actors.append(agent_data)
             else:
                 actor_data.agents[actor.id] = CarlaAgentData(
                     id=actor.id,
-                    location=Location(x=carla_location.x, y=carla_location.y)
+                    location=Location(x=carla_location.x, y=carla_location.y),
+                    great_circle_distance_factor=dist
                 )
                 updated_actors.append(actor_data.agents[actor.id])
 
         if updated_actors:
-            # print(updated_actors)
             websockets.broadcast(g_carla_position_websockets, MsgVsVcAgentLocationUpd(data=updated_actors).to_json())
             
         await asyncio.sleep(1 / 60)

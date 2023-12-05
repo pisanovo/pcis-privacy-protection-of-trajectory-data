@@ -7,9 +7,17 @@ from model.messages import *
 
 
 def on_policy_change_received(new_policy_msg: MsgUserLSPolicyChange, user: LSUser):
+    """
+    Handle dynamic policy changes
+
+    :param new_policy_msg: New user provided policy
+    :param user: User sending new policy
+    """
+    # Cannot assign negative max level
     if new_policy_msg.new_max_level < 0:
         raise ValueError
 
+    # Truncate existing granularity list if received new max level is lower
     if new_policy_msg.new_max_level < user.max_level:
         del user.granularities[:new_policy_msg.new_max_level]
 
@@ -23,12 +31,22 @@ async def message_proximity_change(
         group: LSGroup,
         data: LocationServerInstance,
 ):
+    """
+    Notifies affected users about a proximity change
+
+    :param is_vicinity_entry: Whether the event occurred represents a vicinity entry or leave
+    :param user_affected: User with a vicinity change
+    :param user_entered: The user that entered the affected user's vicinity
+    :param group: Group that user_affected and user_entered are part of
+    :param data: Contains information about users, observers etc.
+    """
     vicinity_unicast_type: Type = MsgLSUserProximityEnter if is_vicinity_entry else MsgLSUserProximityLeave
 
     await user_affected.websocket.send(vicinity_unicast_type(
         other_user_id=user_entered.id,
         group_id=group.id
     ).to_json())
+    # If there are observers broadcast information
     if data.observers:
         websockets.broadcast(data.observers, MsgLSObserverProximity(
             proximity_enter=is_vicinity_entry,
@@ -41,6 +59,13 @@ async def message_proximity_change(
 
 
 async def on_message_received(user: LSUser, upd: MsgUserLSIncUpd, data: LocationServerInstance):
+    """
+    Processes updates from users about position and vicinity
+
+    :param user: User delivering update
+    :param upd: Information containing new position and vicinity
+    :param data:
+    """
     if data.observers:
         # Broadcast incremental update to observers
         websockets.broadcast(data.observers, MsgLSObserverIncUpd(
@@ -67,7 +92,6 @@ async def on_message_received(user: LSUser, upd: MsgUserLSIncUpd, data: Location
         ))
     # If we're patching an existing granularity level
     else:
-        print(upd.level, len(user.granularities))
         level_location = user.granularities[upd.level].encrypted_location
         level_vicinity = user.granularities[upd.level].encrypted_vicinity
         level_vicinity.granules = [g for g in level_vicinity.granules if g not in upd.vicinity_delete.granules]
@@ -76,6 +100,7 @@ async def on_message_received(user: LSUser, upd: MsgUserLSIncUpd, data: Location
 
     for group in user.groups:
         for group_user in group.users:
+            # Nothing to compare
             if group_user == user or len(group_user.granularities) == 0:
                 continue
 
@@ -93,6 +118,7 @@ async def on_message_received(user: LSUser, upd: MsgUserLSIncUpd, data: Location
 
             if gu_in_u or u_in_gu:
                 if min_level == user.max_level or min_level == group_user.max_level:
+                    # Notify user about the vicinity enter event
                     if gu_in_u and group_user not in user.proximate_users:
                         user.proximate_users.append(group_user)
                         await message_proximity_change(
@@ -112,7 +138,7 @@ async def on_message_received(user: LSUser, upd: MsgUserLSIncUpd, data: Location
                             data=data
                         )
                 else:
-                    # TODO: Figure out if observers need this information
+                    # Ask user to increase level
                     if min_level == len(user.granularities) - 1:
                         await user.websocket.send(MsgLSUserLevelIncrease(
                             to_level=min_level + 1
@@ -122,6 +148,7 @@ async def on_message_received(user: LSUser, upd: MsgUserLSIncUpd, data: Location
                             to_level=min_level + 1
                         ).to_json())
 
+            # Notify user about the vicinity leave event
             if not gu_in_u and group_user in user.proximate_users:
                 user.proximate_users.remove(group_user)
                 await message_proximity_change(
