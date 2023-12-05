@@ -2,6 +2,11 @@ import carla
 import random
 import time
 import threading
+import requests
+import os
+
+CARLA_URL = str(os.getenv('CARLA_URL'))
+CARLA_PORT = int(os.getenv('CARLA_PORT'))
 
 # Helpers
 def set_interval(func, sec):
@@ -17,7 +22,7 @@ def set_interval(func, sec):
 # and regularly queries the the location service
 def start_driving(service_query_interval, ):
   # 0.) Connect to the client and retrieve the world object
-  client = carla.Client("host.docker.internal", 2000)
+  client = carla.Client(CARLA_URL, CARLA_PORT)
   world = client.get_world()
 
   # 1.) Wait for actors to become available

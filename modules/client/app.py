@@ -1,7 +1,9 @@
 from flask import Flask, json
 import requests
-
+import os
 import mock_car
+
+ECHO_AGENT_URL = os.getenv('ECHO_AGENT_URL')
 
 api = Flask(__name__)
 
@@ -9,7 +11,7 @@ api = Flask(__name__)
 # services down the line are ok.
 @api.route('/health', methods=['GET'])
 def get_health():
-  response = requests.get('http://echo_agent:5000/health')
+  response = requests.get(ECHO_AGENT_URL + '/health')
   status = response.json()['status']
   if status == "ok":
     return json.dumps({ "status": "ok" })
