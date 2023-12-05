@@ -3,12 +3,22 @@ services:
     build: .
     volumes:
       - "./modules/location_based_service/:/code"
+
   echo_agent:
     build: .
+    depends_on:
+      - echo_db
+    # somehow need to wait until db is ACTUALLY ready and not just healthy.
     volumes:
       - "./modules/echo_agent/:/code"
     environment:
       - LOCATION_SERVER_URL=http://location_based_service:5000
+      - ECHO_DB_HOST=echo_db
+      - ECHO_DB_USER=echo_agent
+      - ECHO_DB_PASSWORD_FILE=/run/secrets/db_password
+    secrets:
+      - db_password
+
   client:
     build: .
     ports:
@@ -21,3 +31,28 @@ services:
       - CARLA_URL=host.docker.internal
       - CARLA_PORT=2000
       - ECHO_AGENT_URL=http://echo_agent:5000
+
+  echo_db:
+    image: mysql:5.7
+    restart: always
+    secrets:
+       - db_root_password
+       - db_password
+    environment:
+      MYSQL_DATABASE: 'db'
+      MYSQL_USER: echo_agent
+      MYSQL_PASSWORD_FILE: /run/secrets/db_password
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/db_root_password
+    expose:
+      - '3306'
+    volumes:
+      - echo_db_volume:/var/lib/mysql
+
+secrets:
+   db_password:
+     file: secrets/db_password.txt
+   db_root_password:
+     file: secrets/db_root_password.txt
+
+volumes:
+  echo_db_volume:
