@@ -1,3 +1,5 @@
+# Network topology: all services are in the docker network,
+# except the service "client" (so that it can connect to carla).
 services:
   location_based_service:
     build: .
@@ -11,6 +13,8 @@ services:
     # somehow need to wait until db is ACTUALLY ready and not just healthy.
     volumes:
       - "./modules/echo_agent/:/code"
+    ports:
+      - "5001:5000" # Bind to 5001 because 5000 is already in use by service "client"
     environment:
       - LOCATION_SERVER_URL=http://location_based_service:5000
       - ECHO_DB_HOST=echo_db
@@ -25,12 +29,11 @@ services:
       - "5000:5000"
     volumes:
       - "./modules/client/:/code"
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+    network_mode: "host" # The client has to be part of the local network in order to access a remote carla instance
     environment:
-      - CARLA_URL=host.docker.internal
-      - CARLA_PORT=2000
-      - ECHO_AGENT_URL=http://echo_agent:5000
+      - CARLA_URL=localhost
+      - CARLA_PORT=3000
+      - ECHO_AGENT_URL=http://localhost:5001      
 
   echo_db:
     image: mysql:5.7

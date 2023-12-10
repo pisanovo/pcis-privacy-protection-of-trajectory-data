@@ -7,6 +7,7 @@ import os
 
 CARLA_URL = str(os.getenv('CARLA_URL'))
 CARLA_PORT = int(os.getenv('CARLA_PORT'))
+ECHO_AGENT_URL = str(os.getenv('ECHO_AGENT_URL'))
 
 # Helpers
 def set_interval(func, sec):
@@ -55,6 +56,6 @@ def start_driving(service_query_interval, ):
   # 4.) Call service regularly
   def log_location():
       location = ego_vehicle.get_location()
-      requests.get('http://echo_agent:5000/anonymous_resource', params={location: location})
+      requests.get(ECHO_AGENT_URL + '/anonymous_resource', params={location: location})
   
   set_interval(log_location, 5)
