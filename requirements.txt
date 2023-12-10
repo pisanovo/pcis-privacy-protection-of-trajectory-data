@@ -1,0 +1,5 @@
+carla~=0.9.14
+pygame~=2.5.2
+websockets~=10.4
+dataclass_wizard~=0.22.2
+numpy~=1.24.4
