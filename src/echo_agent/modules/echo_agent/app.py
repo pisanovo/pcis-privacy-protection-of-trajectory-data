@@ -1,5 +1,5 @@
 import os
-from flask import Flask, json
+from flask import Flask, json, request, Response
 import requests
 import mysql.connector
 
@@ -43,8 +43,19 @@ def get_health():
 # Allows clients to make an anonymous requests
 @api.route('/anonymous_resource', methods=['GET'])
 def get_anonymous_resource():
-  # TODO: Add actual request and don't just log
-  return json.dumps({ "status": "ok" })
+  # TODO: Anonymize and don't just pass through
+  location = request.args.get('location') 
+  service_name = request.args.get('service_name')
+  if service_name == 'service':
+    response = requests.get(LOCATION_SERVER_URL + '/service', params={'location': location})
+    if response.ok:
+      return json.dumps({ "status": "ok" })
+    else:
+      # The location service is mocked, so any error is misconfiguration / implementation / ... related
+      return Response('{"status": "internal server error"}', status=500, mimetype='application/json')
+  # INFO: Here is where you would add more services. This prototype only needs one.
+  # We do not pass the route directly, to avoid things like directory traversal vulnerabilities.
+  return Response('{"status": "invalid property service_name"}', status=401, mimetype='application/json')
 
 if __name__ == '__main__':
     api.run()
