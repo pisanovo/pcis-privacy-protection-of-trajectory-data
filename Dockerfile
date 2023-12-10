@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-FROM python:3.10-bookworm
+FROM python:3.7-bookworm
 RUN pip3 install --upgrade pip
 WORKDIR /code
 ENV FLASK_APP=app.py
