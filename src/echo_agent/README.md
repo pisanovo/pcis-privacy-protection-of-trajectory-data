@@ -4,6 +4,7 @@ TODO: Add a section about the algorithm itself
 
 ## Setup
 
+0. Add two secrets files `./secrets/db_password.txt` and `./secrets/db_root_password.txt`. They should contain the passwords for the db and are ignored by git.
 1. Install docker and docker compose.
 2. Visit the docker compose.yaml and fill out the environment variables pointing to your carla installation (CARLA_URL and CARLA_PORT)
 3. Run `docker compose up --build` to start the system. 
