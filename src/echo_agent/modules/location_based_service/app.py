@@ -2,7 +2,7 @@ from flask import Flask, json, request
 
 api = Flask(__name__)
 
-logs = [{ "status": "ok" }]
+logs = []
 
 # Healthcheck. Responds with { "status": "ok" } if it, and all 
 # services down the line are ok.
