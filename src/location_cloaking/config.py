@@ -20,6 +20,6 @@ class LocationServerConfig:
 
 
 class CarlaConfig:
-    HOST = "127.0.0.1"
-    PORT = 2000
+    HOST = "carla_proxy"
+    PORT = 3000
     TIMEOUT = 2.0

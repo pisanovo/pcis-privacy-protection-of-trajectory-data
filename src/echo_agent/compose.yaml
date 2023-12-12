@@ -1,22 +1,63 @@
-# Network topology: all services are in the docker network,
-# except the service "client" (so that it can connect to carla).
 services:
-  location_based_service:
+  carla_proxy:
     build: .
-    ports:
-      - "5002:5000"
+    tty: true
+    secrets:
+      - carla_ssh_key
+    expose:
+      - 3000
+      - 3001
+      - 3002
+    command: ssh -i /run/secrets/carla_ssh_key -o StrictHostKeyChecking=no -4 -L *:3000:ipvsgpu1.informatik.uni-stuttgart.de:3000 -L *:3001:ipvsgpu1.informatik.uni-stuttgart.de:3001 -L *:3002:ipvsgpu1.informatik.uni-stuttgart.de:3002 bartelmk@ipvslogin.informatik.uni-stuttgart.de
+
+  carla_ingest:
+    build: ../../
+    depends_on:
+      - carla_proxy
+    environment:
+      - CARLA_URL=carla_proxy
+      - CARLA_PORT=3000
+      - PYTHONPATH=/code/src
     volumes:
-      - "./modules/location_based_service/:/code"
+      - "../../:/code"
+    command: python3 /code/src/location_cloaking/utils/map/ingest.py
+
+  carla_generate_traffic:
+    build: ../../
+    tty: true
+    depends_on:
+      carla_ingest:
+        condition: service_completed_successfully
+    environment:
+      - CARLA_URL=carla_proxy
+      - CARLA_PORT=3000
+      - PYTHONPATH=/code/src
+    volumes:
+      - "../../:/code"
+    command: python3 /code/src/location_cloaking/utils/map/generate_random_traffic.py
+
+  client:
+    build: .
+    depends_on:
+      - carla_proxy
+      - carla_generate_traffic
+    volumes:
+      - "./modules/client/:/code"
+    ports:
+      - 5000:5000
+    environment:
+      - CARLA_URL=carla_proxy
+      - CARLA_PORT=3000
+      - ECHO_AGENT_URL=http://echo_agent:5000
 
   echo_agent:
     build: .
     depends_on:
       - echo_db
+      - client
     # somehow need to wait until db is ACTUALLY ready and not just healthy.
     volumes:
       - "./modules/echo_agent/:/code"
-    ports:
-      - "5001:5000" # Bind to 5001 because 5000 is already in use by service "client"
     environment:
       - LOCATION_SERVER_URL=http://location_based_service:5000
       - ECHO_DB_HOST=echo_db
@@ -24,16 +65,13 @@ services:
       - ECHO_DB_PASSWORD_FILE=/run/secrets/db_password
     secrets:
       - db_password
-
-  client:
+    
+  location_based_service:
     build: .
+    depends_on:
+      - echo_agent
     volumes:
-      - "./modules/client/:/code"
-    network_mode: "host" # The client has to be part of the local network in order to access a remote carla instance
-    environment:
-      - CARLA_URL=localhost
-      - CARLA_PORT=3000
-      - ECHO_AGENT_URL=http://localhost:5001      
+      - "./modules/location_based_service/:/code"
 
   echo_db:
     image: mysql:5.7
@@ -56,6 +94,9 @@ secrets:
      file: secrets/db_password.txt
    db_root_password:
      file: secrets/db_root_password.txt
+   carla_ssh_key:
+     file: secrets/ipvs_login
+
 
 volumes:
   echo_db_volume:
