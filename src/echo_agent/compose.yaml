@@ -3,6 +3,8 @@
 services:
   location_based_service:
     build: .
+    ports:
+      - "5002:5000"
     volumes:
       - "./modules/location_based_service/:/code"
 
