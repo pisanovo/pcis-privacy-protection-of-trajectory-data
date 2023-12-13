@@ -24,7 +24,6 @@ services:
 
   carla_generate_traffic:
     build: ../../
-    tty: true
     depends_on:
       carla_ingest:
         condition: service_completed_successfully
@@ -70,8 +69,33 @@ services:
     build: .
     depends_on:
       - echo_agent
+    ports:
+      - 5001:5000 # browser must be able to access it
     volumes:
       - "./modules/location_based_service/:/code"
+
+  carla_visualization_backend:
+    build: ../../
+    depends_on:
+      - carla_generate_traffic
+    environment:
+      - CARLA_URL=carla_proxy
+      - CARLA_PORT=3000
+      - PYTHONPATH=/code/src
+    expose:
+      - 8200
+    ports:
+      - 8200:8200
+    volumes:
+      - "../../:/code"
+    command: python3 /code/src/carla_visualization/server.py
+
+  carla_visualization_frontend:
+    build: ../../../carla-frontend/
+    depends_on:
+      - carla_visualization_backend
+    ports:
+      - 8080:3000
 
   echo_db:
     image: mysql:5.7
