@@ -14,7 +14,11 @@ def get_health():
   response = requests.get(ECHO_AGENT_URL + '/health')
   status = response.json()['status']
   if status == "ok":
-    return json.dumps({ "status": "ok" })
+    try:
+      mock_car.test_connection()
+      return json.dumps({ "status": "ok" })
+    except:
+      return json.dumps({ "status": "unhealthy" })
   return json.dumps({ "status": "unhealthy" })
 
 # Call this route to tell the mocked client to start attaching

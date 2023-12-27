@@ -18,16 +18,8 @@ def set_interval(func, sec):
   t.start()
   return t
 
-# The main function of this script.
-# It attaches to one of the simulated cars in Carla
-# and regularly queries the the location service
-def start_driving(service_query_interval, ):
-  # 0.) Connect to the client and retrieve the world object
-  client = carla.Client(CARLA_URL, CARLA_PORT)
-  world = client.get_world()
-
-  # 1.) Wait for actors to become available
-  retry_count = 10
+# Returns true if actors are available on the world in time
+def wait_for_actors(world, retry_count = 10):
   while retry_count > 0:
       if len(world.get_actors()) > 0:
           break
@@ -36,6 +28,27 @@ def start_driving(service_query_interval, ):
 
   if retry_count == 0 and len(world.get_actors()) == 0:
       raise ValueError('Actors not populated in time')
+
+  return True
+
+# Test the connection to the Carla server
+# and check if cars are driving
+# Returns true, if connected, otherwise raises an error
+def test_connection():
+  client = carla.Client(CARLA_URL, CARLA_PORT)
+  world = client.get_world()
+  return wait_for_actors(world)
+
+# The main function of this script.
+# It attaches to one of the simulated cars in Carla
+# and regularly queries the the location service
+def start_driving(service_query_interval, ):
+  # 0.) Connect to the client and retrieve the world object
+  client = carla.Client(CARLA_URL, CARLA_PORT)
+  world = client.get_world()
+
+  # 1.) Wait for actors to become available (will raise an error if it fails)
+  wait_for_actors(world)
 
   # 2.) Get a random car from the ones driving around 
   all_vehicles = world.get_actors().filter('*vehicle*')
