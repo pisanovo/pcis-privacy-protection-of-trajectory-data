@@ -18,6 +18,8 @@ class LocationServerConfig:
     LISTEN_HOST = "127.0.0.1"
     LISTEN_PORT = 8456
 
+class VisualizationServerConfig:
+    LISTEN_HOST = "carla_visualization_backend"
 
 class CarlaConfig:
     HOST = "carla_proxy"
