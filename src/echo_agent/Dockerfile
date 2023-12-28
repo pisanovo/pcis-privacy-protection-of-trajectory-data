@@ -7,4 +7,4 @@ ENV FLASK_RUN_HOST=0.0.0.0
 COPY requirements.txt requirements.txt
 RUN pip3 install --no-cache-dir -r requirements.txt
 EXPOSE 5000
-CMD ["flask", "run"]
+CMD ["flask", "--debug", "run"]
