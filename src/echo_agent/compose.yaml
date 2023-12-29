@@ -8,12 +8,19 @@ services:
       - 3000
       - 3001
       - 3002
+    healthcheck:
+      test: ['CMD', 'printf', '"GET / HTTP/1.1\n\n" > /dev/tcp/127.0.0.1/3000']
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 5s
     command: ssh -i /run/secrets/carla_ssh_key -o StrictHostKeyChecking=no -4 -L *:3000:ipvsgpu1.informatik.uni-stuttgart.de:3000 -L *:3001:ipvsgpu1.informatik.uni-stuttgart.de:3001 -L *:3002:ipvsgpu1.informatik.uni-stuttgart.de:3002 bartelmk@ipvslogin.informatik.uni-stuttgart.de
 
   carla_ingest:
     build: ../../
     depends_on:
-      - carla_proxy
+      carla_proxy:
+        condition: service_healthy
     environment:
       - CARLA_URL=carla_proxy
       - CARLA_PORT=3000
@@ -38,8 +45,8 @@ services:
   client:
     build: .
     depends_on:
-      - carla_proxy
       - carla_generate_traffic
+      - echo_agent
     volumes:
       - "./modules/client/:/code"
     ports:
@@ -53,7 +60,7 @@ services:
     build: .
     depends_on:
       - echo_db
-      - client
+      - location_based_service
     # somehow need to wait until db is ACTUALLY ready and not just healthy.
     volumes:
       - "./modules/echo_agent/:/code"
@@ -68,7 +75,7 @@ services:
   location_based_service:
     build: .
     depends_on:
-      - echo_agent
+      - carla_generate_traffic
     ports:
       - 5001:5000 # browser must be able to access it
     volumes:
