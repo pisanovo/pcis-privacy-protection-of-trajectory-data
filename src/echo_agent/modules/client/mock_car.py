@@ -56,17 +56,7 @@ def start_driving(service_query_interval, ):
 
   print('Picked a vehicle. Start tracking...')
 
-  # 3.) Watch the car from the top
-  spectator = world.get_spectator()
-
-  def update_spectator_location():
-      transform = ego_vehicle.get_transform()
-      spectator.set_transform(carla.Transform(transform.location + carla.Location(z=50),
-      carla.Rotation(pitch=-90)))
-
-  set_interval(update_spectator_location, 1.0/24.0)
-
-  # 4.) Call service regularly
+  # 3.) Call service regularly
   def log_location():
       location = ego_vehicle.get_location()
       requests.get(ECHO_AGENT_URL + '/anonymous_resource', params={'x': location.x, 'y': location.y, 'service_name': 'service'})
