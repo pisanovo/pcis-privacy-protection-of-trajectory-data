@@ -42,7 +42,7 @@ def test_connection():
 # The main function of this script.
 # It attaches to one of the simulated cars in Carla
 # and regularly queries the the location service
-def start_driving(service_query_interval, ):
+def start_driving(service_query_interval):
   # 0.) Connect to the client and retrieve the world object
   client = carla.Client(CARLA_URL, CARLA_PORT)
   world = client.get_world()
@@ -61,4 +61,4 @@ def start_driving(service_query_interval, ):
       location = ego_vehicle.get_location()
       requests.get(ECHO_AGENT_URL + '/anonymous_resource', params={'x': location.x, 'y': location.y, 'service_name': 'service'})
   
-  set_interval(log_location, 5)
+  set_interval(log_location, service_query_interval)
