@@ -46,6 +46,11 @@ def get_service():
 def get_visualization_info():
    return json.dumps({ "logs": logs })
 
+# This Route flushes the logs so you don't have to restart the service to restart
+@api.route('/visualization_info', methods=['DELETE'])
+def delete_visualization_info():
+   logs.clear()
+   return json.dumps({ "msg": "deleted logs successfully" })
 
 if __name__ == '__main__':
     api.run()
