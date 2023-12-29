@@ -44,10 +44,11 @@ def get_health():
 @api.route('/anonymous_resource', methods=['GET'])
 def get_anonymous_resource():
   # TODO: Anonymize and don't just pass through
-  location = request.args.get('location') 
+  x = float(request.args.get('x'))
+  y = float(request.args.get('y')) 
   service_name = request.args.get('service_name')
   if service_name == 'service':
-    response = requests.get(LOCATION_SERVER_URL + '/service', params={'location': location})
+    response = requests.get(LOCATION_SERVER_URL + '/service', params={'x': x, 'y': y})
     if response.ok:
       return json.dumps({ "status": "ok" })
     else:

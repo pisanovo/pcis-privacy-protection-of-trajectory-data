@@ -69,6 +69,6 @@ def start_driving(service_query_interval, ):
   # 4.) Call service regularly
   def log_location():
       location = ego_vehicle.get_location()
-      requests.get(ECHO_AGENT_URL + '/anonymous_resource', params={'location': location, 'service_name': 'service'})
+      requests.get(ECHO_AGENT_URL + '/anonymous_resource', params={'x': location.x, 'y': location.y, 'service_name': 'service'})
   
   set_interval(log_location, 5)
