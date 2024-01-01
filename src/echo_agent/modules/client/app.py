@@ -29,7 +29,7 @@ def get_health():
 # NOTE: This is unclean and not following the REST pattern
 @api.route('/start', methods=['GET'])
 def get_start():
-  mock_car_intervals.append(mock_car.start_driving(service_query_interval=5))
+  mock_car_intervals.append(mock_car.start_driving(service_query_interval=15))
   return json.dumps({ "msg": "simulation started (" + str(len(mock_car_intervals)) + " running)" })
 
 # Call this route to tell the mocked client to stop the simulation
