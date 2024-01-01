@@ -3,6 +3,7 @@ from flask import Flask, json, request, Response
 import requests
 from pymongo import MongoClient
 from pymongo.errors import ConnectionFailure
+from dummy_generator import get_dummies_for_user
 
 
 api = Flask(__name__)
@@ -44,12 +45,24 @@ def get_health():
 # Allows clients to make an anonymous requests
 @api.route('/anonymous_resource', methods=['GET'])
 def get_anonymous_resource():
-  # TODO: Anonymize and don't just pass through
+  # Parse real client location and user id
   x = float(request.args.get('x'))
   y = float(request.args.get('y')) 
+  user_id = str(request.args.get('user_id'))
+  # Parse desired service name (NOTE: In this prototype, only one service exists)
   service_name = request.args.get('service_name')
+  # Get the locations of N dummies
+  dummy_locations = get_dummies_for_user(user_id=user_id)
   if service_name == 'service':
+    # Call the service for all the dummies, and once with the real location
+    # NOTE: In reality, you should do this randomly, so the server cannot guess from order who is dummy
     response = requests.get(LOCATION_SERVER_URL + '/service', params={'x': x, 'y': y})
+    for dummy_location in dummy_locations:
+      requests.get(
+        LOCATION_SERVER_URL + '/service',
+        params={'x': dummy_location['x'], 'y': dummy_location['y']}
+      )
+    # Forward real response, in this case, if service returned ok
     if response.ok:
       return json.dumps({ "status": "ok" })
     else:

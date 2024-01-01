@@ -69,6 +69,7 @@ services:
       - ECHO_DB_HOST=echo_db
       - ECHO_DB_USER=echo_agent
       - ECHO_DB_PASSWORD_FILE=/run/secrets/db_password
+      - NUMBER_OF_DUMMIES=3
     secrets:
       - db_password
     
