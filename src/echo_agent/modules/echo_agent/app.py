@@ -1,7 +1,9 @@
 import os
 from flask import Flask, json, request, Response
 import requests
-import mysql.connector
+from pymongo import MongoClient
+from pymongo.errors import ConnectionFailure
+
 
 api = Flask(__name__)
 
@@ -18,11 +20,7 @@ ECHO_DB_PASSWORD = lines[0]
 f.close()
 
 # Connect to mysql db
-echo_db = mysql.connector.connect(
-   host=ECHO_DB_HOST,
-   user=ECHO_DB_USER,
-   password=ECHO_DB_PASSWORD
-)
+echo_db = MongoClient(ECHO_DB_HOST, 27017) # Default port
 
 # Healthcheck. Responds with { "status": "ok" } if it, and all 
 # services down the line are ok.
@@ -30,7 +28,10 @@ echo_db = mysql.connector.connect(
 def get_health():
   healthy = True
   # Test connection to db server
-  healthy = healthy and echo_db.is_connected()
+  try:
+    echo_db.admin.command('ping')
+  except ConnectionFailure:
+      healthy = False
 
   # Test connection to location server
   location_server_response = requests.get(LOCATION_SERVER_URL + '/health')

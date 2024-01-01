@@ -105,20 +105,17 @@ services:
       - 8080:3000
 
   echo_db:
-    image: mysql:5.7
+    image: mongo
     restart: always
     secrets:
        - db_root_password
        - db_password
     environment:
-      MYSQL_DATABASE: 'db'
-      MYSQL_USER: echo_agent
-      MYSQL_PASSWORD_FILE: /run/secrets/db_password
-      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/db_root_password
-    expose:
-      - '3306'
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD_FILE: /run/secrets/db_password
+    # Exposes default port 27017
     volumes:
-      - echo_db_volume:/var/lib/mysql
+      - echo_db_volume:/data/db
 
 secrets:
    db_password:
