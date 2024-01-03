@@ -6,7 +6,7 @@ from location_cloaking.client.model.data import Position, ClientInstance
 
 class SourceProvider(Protocol):
     @abstractmethod
-    def get_latest_position(self) -> Position: raise NotImplementedError
+    async def get_latest_position(self) -> Position: raise NotImplementedError
 
     @staticmethod
     @abstractmethod

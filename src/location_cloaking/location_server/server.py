@@ -60,6 +60,11 @@ async def use(websocket, init_msg: MsgClientLSInit):
         ).to_json())
 
         async for message in websocket:
+            # user_idsx = []
+            # for user in data.users:
+            #     user_idsx.append(user.id)
+            logger.info([u.id for u in data.users])
+
             event = json.loads(message)
 
             if event["type"] == "MsgUserLSIncUpd":

@@ -19,7 +19,7 @@ class CarlaSourceProvider(SourceProvider):
         self._carla_world: World = self._client.get_world()
         self._carla_id = source_instance_data["id"]
 
-    def get_latest_position(self) -> Position:
+    async def get_latest_position(self) -> Position:
         # In synchronous mode getting actors might return nothing until a tick passed
         while len(self._carla_world.get_actors()) == 0:
             pass
