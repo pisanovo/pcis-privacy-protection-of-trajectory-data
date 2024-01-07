@@ -12,6 +12,7 @@ class LSUser:
     alias: List[str]
     websocket: any
     granularities: List[EncryptedGranularityLevel]
+    vicinity_shape: dict
     proximate_users: List["LSUser"]
     groups: List["LSGroup"]
     max_level: int
