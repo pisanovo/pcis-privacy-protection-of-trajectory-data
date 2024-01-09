@@ -3,10 +3,13 @@ from flask import Flask, json, request, Response
 import requests
 from pymongo import MongoClient
 from pymongo.errors import ConnectionFailure
-from dummy_generator import get_dummies_for_user
+import dummy_storage
+import user_movement_storage
+from flask_cors import CORS, cross_origin
 
 
 api = Flask(__name__)
+cors = CORS(api)
 
 # Get env variables
 LOCATION_SERVER_URL = os.getenv('LOCATION_SERVER_URL')
@@ -45,23 +48,28 @@ def get_health():
 # Allows clients to make an anonymous requests
 @api.route('/anonymous_resource', methods=['GET'])
 def get_anonymous_resource():
+  # 0. Parse data
   # Parse real client location and user id
   x = float(request.args.get('x'))
   y = float(request.args.get('y')) 
   user_id = str(request.args.get('user_id'))
   # Parse desired service name (NOTE: In this prototype, only one service exists)
+  # We do not pass the route directly, to avoid things like directory traversal vulnerabilities.
   service_name = request.args.get('service_name')
+  # 1. Insert it into our database
+  user_movement_storage.insert_user_location(user_id=user_id, x=x, y=y)
   # Get the locations of N dummies
-  dummy_locations = get_dummies_for_user(user_id=user_id)
+  dummy_locations = dummy_storage.get_dummies_for_user(user_id=user_id)
+  # 2. Call service (in our case, only one mocked one exists)
   if service_name == 'service':
     # Call the service for all the dummies, and once with the real location
-    # NOTE: In reality, you should do this randomly, so the server cannot guess from order who is dummy
+    # TODO: In reality, you should do this randomly, so the server cannot guess from order who is dummy
     response = requests.get(LOCATION_SERVER_URL + '/service', params={'x': x, 'y': y})
-    for dummy_location in dummy_locations:
-      requests.get(
-        LOCATION_SERVER_URL + '/service',
-        params={'x': dummy_location['x'], 'y': dummy_location['y']}
-      )
+    # for dummy_location in dummy_locations:
+    #   requests.get(
+    #     LOCATION_SERVER_URL + '/service',
+    #     params={'x': dummy_location['x'], 'y': dummy_location['y']}
+    #   )
     # Forward real response, in this case, if service returned ok
     if response.ok:
       return json.dumps({ "status": "ok" })
@@ -69,8 +77,15 @@ def get_anonymous_resource():
       # The location service is mocked, so any error is misconfiguration / implementation / ... related
       return Response('{"status": "internal server error"}', status=500, mimetype='application/json')
   # INFO: Here is where you would add more services. This prototype only needs one.
-  # We do not pass the route directly, to avoid things like directory traversal vulnerabilities.
+  # Fallback, incase an unknown service_name was passed on
   return Response('{"status": "invalid property service_name"}', status=401, mimetype='application/json')
+
+# Dumps the user movement database so that you can see 
+# on what basis calculations are made
+@api.route('/user_movement_storage', methods=['GET'])
+@cross_origin() # This is a route intended to be consumed by web frontends. TODO: Don't use wildcard cors
+def get_user_movement_storage():
+  return user_movement_storage.dump_user_movements_json()
 
 if __name__ == '__main__':
     api.run()
