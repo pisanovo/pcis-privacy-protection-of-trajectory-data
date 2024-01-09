@@ -1,4 +1,5 @@
 import time
+from copy import deepcopy
 from flask import json
 
 # TODO: As soon as we use a real database, ids can be generate by it
@@ -62,7 +63,7 @@ def dump_user_movements_json():
     # instances of User_Movement)
     for movement in mock_db["user_movements"]:
         # Convert to dict so that we can json dump it
-        movement_dict = movement.__dict__
+        movement_dict = deepcopy(movement.__dict__)
         # Populate and conver nodes
         Node_List_Populated = []
         for node_id in movement_dict['Node_List']:
