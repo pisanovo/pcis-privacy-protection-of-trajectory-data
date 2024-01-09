@@ -43,6 +43,9 @@ def test_connection():
 # It attaches to one of the simulated cars in Carla
 # and regularly queries the the location service
 # Returns the interval so you can stop it
+# NOTE: It will make sure not to attach twice to the same car
+picked_vehicle_ids = []
+picked_vehicle_intervals = []
 def start_driving(service_query_interval=5):
   # 0.) Connect to the client and retrieve the world object
   client = carla.Client(CARLA_URL, CARLA_PORT)
@@ -53,7 +56,14 @@ def start_driving(service_query_interval=5):
 
   # 2.) Get a random car from the ones driving around 
   all_vehicles = world.get_actors().filter('*vehicle*')
-  ego_vehicle = random.choice(list(all_vehicles))
+  ego_vehicle = None
+  if len(all_vehicles) == len(picked_vehicle_ids):
+     # Cannot start more simulations, so just do nothing
+     return len(picked_vehicle_ids)
+  while ego_vehicle == None:
+    ego_vehicle = random.choice(list(all_vehicles))
+    if ego_vehicle.id in picked_vehicle_ids:
+       ego_vehicle = None
 
   print('Picked a vehicle. Start tracking...')
 
@@ -73,4 +83,19 @@ def start_driving(service_query_interval=5):
          }
       )
   
-  return set_interval(log_location, service_query_interval)
+  picked_vehicle_intervals.append(set_interval(log_location, service_query_interval))
+  picked_vehicle_ids.append(ego_vehicle.id)
+
+  return len(picked_vehicle_intervals)
+
+# Stops all simulated cars
+# (cars in carla will continue to drive though,
+# this just cancels the attachment to the cars)
+# Returns the number of cars stopped
+def stop_all():
+  for interval in picked_vehicle_intervals:
+    interval.cancel()
+  number_of_intervals = len(picked_vehicle_intervals)
+  picked_vehicle_intervals.clear()
+  picked_vehicle_ids.clear()
+  return number_of_intervals
