@@ -54,7 +54,7 @@ def get_closest_elevated_waypoint_transform(geo, waypoints):
     return closest_waypoint_transform
 
 try:
-    num_vehicles = 5
+    num_vehicles = 15
 
     client = carla.Client(CarlaConfig.HOST, CarlaConfig.PORT)
     client.set_timeout(CarlaConfig.TIMEOUT)

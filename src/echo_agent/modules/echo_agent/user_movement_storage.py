@@ -1,4 +1,5 @@
 import time
+import random
 from copy import deepcopy
 from flask import json
 
@@ -20,6 +21,7 @@ class User_Movement:
     
     def insert_node(self, node):
         self.Node_List.append(node.Node_Id)
+        self.No_of_Nodes = self.No_of_Nodes + 1
         node.set_parent(self.R_No)
 
 class Location:
@@ -49,11 +51,49 @@ def insert_user_location(user_id, x, y):
     # 1. Insert new location node
     new_location_node = Location(x=x, y=y)
     mock_db["nodes"].append(new_location_node)
-    for movement in mock_db["user_movements"]:
-        if movement.R_No == movement_id:
-            movement.insert_node(new_location_node)
+    get_user_movement(movement_id).insert_node(new_location_node)
 
     return
+
+# Returns the specified node
+def get_node(node_id):
+    for node in mock_db["nodes"]:
+        if node.Node_Id == node_id:
+            return node
+    return None
+
+# Returns a specific user movement
+def get_user_movement(user_movement_id):
+    for movement in mock_db["user_movements"]:
+        if movement.R_No == user_movement_id:
+            return movement
+    return None
+
+# Get random user movement
+def get_random_user_movement():
+    return random.choice(mock_db["user_movements"])
+
+# Finds neighbour nodes close to a specified node.
+# A neighbour node is a node that is close, but
+# not from the same user movement.
+def search_neighbours(node_id, distance_threshold = 0.001): # 0.001 latitude/longitude difference corresponds to 111 meters
+    search_node = get_node(node_id) 
+    result_list = []
+    for node in mock_db["nodes"]:
+        # Don't compare to self
+        if node.Node_Id == search_node.Node_Id:
+            continue
+        # Don't compare to same user movement
+        if node.parent_id == search_node.parent_id:
+            continue
+        # Is node close enough?
+        delta_x = abs(node.x - search_node.x)
+        delta_y = abs(node.y - search_node.y)
+        if delta_x > distance_threshold and delta_y > distance_threshold:
+            continue
+        # Node is a suitable candidate! Add to results
+        result_list.append(node)
+    return result_list
 
 # Dumps a list of all user movements
 # as json
@@ -67,9 +107,8 @@ def dump_user_movements_json():
         # Populate and conver nodes
         Node_List_Populated = []
         for node_id in movement_dict['Node_List']:
-            for node in mock_db["nodes"]:
-                if node.Node_Id == node_id:
-                    Node_List_Populated.append(node.__dict__)
+            node = get_node(node_id)
+            Node_List_Populated.append(node.__dict__)
         movement_dict['Node_List'] = Node_List_Populated
         dump.append(movement_dict)
     return json.dumps(dump)

@@ -4,6 +4,7 @@ import requests
 from pymongo import MongoClient
 from pymongo.errors import ConnectionFailure
 import dummy_storage
+import dummy_generator
 import user_movement_storage
 from flask_cors import CORS, cross_origin
 
@@ -65,11 +66,11 @@ def get_anonymous_resource():
     # Call the service for all the dummies, and once with the real location
     # TODO: In reality, you should do this randomly, so the server cannot guess from order who is dummy
     response = requests.get(LOCATION_SERVER_URL + '/service', params={'x': x, 'y': y})
-    # for dummy_location in dummy_locations:
-    #   requests.get(
-    #     LOCATION_SERVER_URL + '/service',
-    #     params={'x': dummy_location['x'], 'y': dummy_location['y']}
-    #   )
+    for dummy_location in dummy_locations:
+      requests.get(
+        LOCATION_SERVER_URL + '/service',
+        params={'x': dummy_location['x'], 'y': dummy_location['y']}
+      )
     # Forward real response, in this case, if service returned ok
     if response.ok:
       return json.dumps({ "status": "ok" })
@@ -86,6 +87,25 @@ def get_anonymous_resource():
 @cross_origin() # This is a route intended to be consumed by web frontends. TODO: Don't use wildcard cors
 def get_user_movement_storage():
   return user_movement_storage.dump_user_movements_json()
+
+# Generate a dummy
+@api.route('/dummy', methods=['POST'])
+@cross_origin() # This is a route intended to be consumed by web frontends. TODO: Don't use wildcard cors
+def post_dummy():
+  min_node_count = int(request.args.get('min_node_count'))
+  max_node_count = int(request.args.get('max_node_count'))
+  nb_range = float(request.args.get('nb_range'))
+  successful = dummy_generator.generate_dummy(min_node_count=min_node_count, max_node_count=max_node_count, nb_range=nb_range)
+  if successful:
+    return json.dumps({"msg": "Generated 1 dummy succesfully" })
+  else:
+    return json.dumps({"msg": "Dummy generation failed"})
+
+# Dumps the dummy database
+@api.route('/dummy_storage', methods=['GET'])
+@cross_origin() # This is a route intended to be consumed by web frontends. TODO: Don't use wildcard cors
+def get_dummy_storage():
+  return dummy_storage.dump_dummies_json()
 
 if __name__ == '__main__':
     api.run()
