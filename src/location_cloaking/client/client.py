@@ -22,7 +22,6 @@ async def configuration_change_handler(config_file_data: str):
     while True:
         with open(args.file[0][0]) as f:
             new_data = f.read().rstrip()
-            # print("COMPARE CONFIG: ", new_data != config_file_data)
 
             if new_data != config_file_data:
                 os.execv(sys.executable, ['python'] + sys.argv)

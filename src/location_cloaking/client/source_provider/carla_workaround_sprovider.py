@@ -20,11 +20,8 @@ class CarlaWorkaroundSourceProvider(SourceProvider):
                 agent_id=self._carla_id
             ).to_json())
 
-            # print("HI", self._carla_id)
-
             message = await websocket.recv()
             msg = MsgVsClientPositionResponse.from_json(message)
-
 
             return Position(msg.x, msg.y)
 
