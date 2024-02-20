@@ -16,13 +16,6 @@ cors = CORS(api)
 LOCATION_SERVER_URL = os.getenv('LOCATION_SERVER_URL')
 ECHO_DB_HOST = os.getenv('ECHO_DB_HOST')
 ECHO_DB_USER = os.getenv('ECHO_DB_USER')
-ECHO_DB_PASSWORD_FILE = os.getenv('ECHO_DB_PASSWORD_FILE')
-
-# Read secret files
-f = open(ECHO_DB_PASSWORD_FILE,"r")
-lines = f.readlines()
-ECHO_DB_PASSWORD = lines[0]
-f.close()
 
 # Connect to mysql db
 echo_db = MongoClient(ECHO_DB_HOST, 27017) # Default port
