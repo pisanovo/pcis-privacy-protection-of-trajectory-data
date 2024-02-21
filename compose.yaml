@@ -1,0 +1,7 @@
+# This is the main docker compose definition for this project.
+#   It combines the individual deployment configurations for
+#   the algorithms.
+version: '3.8'
+include:
+  - ./deployment/carla-tools/compose.yaml
+  - ./deployment/echo_agent/compose.yaml

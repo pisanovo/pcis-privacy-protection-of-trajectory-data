@@ -1,4 +1,6 @@
 # syntax=docker/dockerfile:1
+# Dockerfile for the echo_agent services
+# Expected context: ./src/echo_agent
 FROM python:3.7-bookworm
 RUN pip3 install --upgrade pip
 WORKDIR /code
