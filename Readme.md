@@ -21,7 +21,7 @@ Because this project has many components, we use docker compose to run it.
 
 ### 2. Configuration
 
-1. Copy the [example .env file](./.env.example) and fill it with your own values.
+1. Follow the instructions in the [example .env file](./.env.example) to configure your environment.
 2. Create the secret files mentioned in the .env.example and note their location in the respective env variables:
 - Create an ssh keypair and register it with the remote host that runs carla. If you don't know how to do that, [this](https://www.digitalocean.com/community/tutorials/how-to-use-ssh-to-connect-to-a-remote-server#how-to-log-into-ssh-with-keys) is a good place to start. Check the example file for further information
 - Create a secret password file for the echo_agent db. This is just a `.txt` file with one line of text, that contains the password you would like to use.
