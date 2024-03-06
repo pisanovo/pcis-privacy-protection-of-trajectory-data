@@ -3,6 +3,7 @@ from location_cloaking.client.source_provider.carla_source_provider import Carla
 from location_cloaking.client.source_provider.source_provider import SourceProvider
 from location_cloaking.location_server.granularity_plane.carla_plane_data_provider import CarlaPlaneDataProvider
 from location_cloaking.location_server.granularity_plane.plane_data import PlaneDataProvider
+import os
 
 
 class Config:
@@ -22,6 +23,6 @@ class VisualizationServerConfig:
     LISTEN_HOST = "carla_visualization_backend"
 
 class CarlaConfig:
-    HOST = "carla_proxy"
-    PORT = 3000
+    HOST = os.getenv('CARLA_URL')
+    PORT = int(os.getenv('CARLA_PORT'))
     TIMEOUT = 10.0
