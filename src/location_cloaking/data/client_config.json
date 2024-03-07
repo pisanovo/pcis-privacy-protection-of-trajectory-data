@@ -12,7 +12,7 @@
     },
     "vicinity": {
       "type": "VicinityCircleShape",
-      "radius": 105
+      "radius": 95
     }
   }
 ]

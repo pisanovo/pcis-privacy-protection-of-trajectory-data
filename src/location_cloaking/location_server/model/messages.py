@@ -12,7 +12,7 @@ from location_cloaking.model.messages import MsgIncrementalUpdate, Message, Mess
 @dataclass
 class MsgLSClientInitComplete(Message):
     user_id: int
-    type = "InitComplete"
+    type: str = "InitComplete"
     plane_data: GranularityPlaneDimensions = None
 
 

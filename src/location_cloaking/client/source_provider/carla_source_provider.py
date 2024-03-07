@@ -97,7 +97,7 @@ class CarlaSourceProvider(SourceProvider):
                         "id": idx
                     },
                     alias=[
-                        f"CARLA-id-{idx}"
+                        f"CARLA-{idx}"
                     ],
                     group_ids=list(set(group_ids)),
                     policy=client_policy
@@ -168,7 +168,7 @@ class CarlaSourceProvider(SourceProvider):
                         "id": idx
                     },
                     alias=[
-                        f"CARLA-id-{idx}"
+                        f"CARLA-{idx}"
                     ],
                     group_ids=list(set(group_ids)),
                     policy=client_policy
