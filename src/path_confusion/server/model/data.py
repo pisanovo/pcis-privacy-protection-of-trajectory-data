@@ -34,6 +34,7 @@ class IntervalVehicleEntry:
 @dataclass
 class AlgorithmData:
     intervals: List[IntervalVehicleEntry]
+    is_live: bool
 
 
 @dataclass
@@ -49,3 +50,4 @@ class AlgorithmSettings:
     t_guard: float
     trip_timeout: float
     mue: float
+    k_anonymity: int
