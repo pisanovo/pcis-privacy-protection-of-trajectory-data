@@ -74,6 +74,7 @@ services:
     environment:
       - CARLA_URL=carla_proxy
       - CARLA_PORT=${CARLA_PORT_BASE:?error}
+      - CARLA_VISUALIZATION_BACKEND_LISTEN_HOST=carla_visualization_backend
       - PYTHONPATH=/code/src
     expose:
       - ${CARLA_VISUALIZATION_BACKEND_PORT:-8200}

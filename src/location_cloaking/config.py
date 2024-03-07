@@ -21,9 +21,9 @@ class LocationServerConfig:
     LISTEN_PORT = 8456
 
 class VisualizationServerConfig:
-    LISTEN_HOST = "carla_visualization_backend"
+    LISTEN_HOST = os.getenv('CARLA_VISUALIZATION_BACKEND_LISTEN_HOST') or "127.0.0.1"
 
 class CarlaConfig:
-    HOST = os.getenv('CARLA_URL')
-    PORT = int(os.getenv('CARLA_PORT'))
+    HOST = os.getenv('CARLA_URL') or "127.0.0.1"
+    PORT = int(os.getenv('CARLA_PORT') or 2000)
     TIMEOUT = 25.0
