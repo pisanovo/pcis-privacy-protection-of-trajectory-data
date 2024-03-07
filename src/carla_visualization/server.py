@@ -107,6 +107,7 @@ async def handler(websocket, path):
 
 
 async def serve():
+    print(VisualizationServerConfig.LISTEN_HOST)
     async with websockets.serve(handler, VisualizationServerConfig.LISTEN_HOST,
                                 8200, ping_interval=None):
         await asyncio.Future()
