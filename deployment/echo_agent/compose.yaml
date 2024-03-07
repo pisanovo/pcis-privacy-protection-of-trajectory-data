@@ -1,0 +1,70 @@
+# This module contains all services needed to run
+# the echo_agent in development mode (i.e. the python flask
+# servers are running in debug mode with hot reloading).
+# 
+# WARNING: this is a prototype, no production configuration is included.
+version: '3.8'
+services:
+  client:
+    build:
+      context: ../../src/echo_agent
+      dockerfile: ../../deployment/echo_agent/dockerfile
+    depends_on:
+      - carla_generate_traffic
+      - echo_agent
+    volumes:
+      - "../../src/echo_agent/modules/client/:/code"
+    ports:
+      - ${ECHO_AGENT_CLIENT_PORT:-5000}:5000
+    environment:
+      - CARLA_URL=${CARLA_HOST:?error}
+      - CARLA_PORT=${CARLA_PORT_BASE:?error}
+      - ECHO_AGENT_URL=http://echo_agent:5000
+
+  echo_agent:
+    build:
+      context: ../../src/echo_agent
+      dockerfile: ../../deployment/echo_agent/dockerfile
+    depends_on:
+      - echo_db
+      - location_based_service
+    # somehow need to wait until db is ACTUALLY ready and not just healthy.
+    volumes:
+      - "../../src/echo_agent/modules/echo_agent/:/code"
+    environment:
+      - LOCATION_SERVER_URL=http://location_based_service:5000
+      - ECHO_DB_HOST=echo_db
+      - ECHO_DB_USER=echo_agent
+      - NUMBER_OF_DUMMIES=3
+    ports:
+      - ${ECHO_AGENT_ECHO_AGENT_PORT:-5001}:5000 # browser must be able to access it
+    
+  location_based_service:
+    build:
+      context: ../../src/echo_agent
+      dockerfile: ../../deployment/echo_agent/dockerfile
+    depends_on:
+      - carla_generate_traffic
+    ports:
+      - ${ECHO_AGENT_LOCATION_BASED_SERVICE_PORT:-5002}:5000 # browser must be able to access it
+    volumes:
+      - "../../src/echo_agent/modules/location_based_service/:/code"
+
+  echo_db:
+    image: mongo
+    restart: always
+    secrets:
+       - db_root_password
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD_FILE: /run/secrets/db_root_password
+    # Exposes default port 27017
+    volumes:
+      - echo_db_volume:/data/db
+
+secrets:
+   db_root_password:
+     file: ${DB_ROOT_PASSWORD_FILE:?error}
+
+volumes:
+  echo_db_volume:

@@ -2,4 +2,6 @@
 /venv/
 /src/location_cloaking/visualizer/cache/
 /.env
+**/.env
 **/__pycache__
+secrets

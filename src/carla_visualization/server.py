@@ -9,6 +9,7 @@ from carla_visualization.model.data import CarlaData, Location, CarlaAgentData
 from carla_visualization.model.messages import MsgVsVcAgentLocationUpd, MsgVsVcAgents, MsgVcVsClientConfigUpd, \
     MsgVsVcClientConfigSync, MsgClientVsPositionRequest, MsgVsClientPositionResponse
 from location_cloaking.config import LocationServerConfig, CarlaConfig
+from location_cloaking.config import VisualizationServerConfig
 from location_cloaking.logging import setup_logger
 
 logger = setup_logger(__name__, level=logging.DEBUG)
@@ -106,7 +107,7 @@ async def handler(websocket, path):
 
 
 async def serve():
-    async with websockets.serve(handler, LocationServerConfig.LISTEN_HOST,
+    async with websockets.serve(handler, VisualizationServerConfig.LISTEN_HOST,
                                 8200, ping_interval=None):
         await asyncio.Future()
 

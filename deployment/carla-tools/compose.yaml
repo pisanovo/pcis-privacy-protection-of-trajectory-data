@@ -1,0 +1,100 @@
+# This is a docker compose configuration, that adds carla support
+# to an existing application. It consists of multiple components:
+# 
+# - Carla Proxy: 
+#      The carla Proxy connects via ssh to a carla instance running on
+#      on a remote server.
+# - Carla Ingest:
+#      Runs a python script to ingest an Open Street Map into the carla
+#      instance.
+# - Carla Generate Traffic:
+#      Runs a python script that will generate random traffic driving 
+#      around on the ingested map.
+# - Carla Visualization Backend and Carla Visualization Frontend:
+#      A python backend server and NextJS based web frontend to visualize
+#      what is happening in Carla as well as whatever output you want to show.
+#
+version: "3.8"
+services:
+  carla_proxy:
+    build:
+      context: ../../
+      dockerfile: ./deployment/carla-tools/carla-tools.dockerfile
+    tty: true
+    secrets:
+      - carla_ssh_key
+    expose:
+      - ${CARLA_PORT_BASE:?error}
+      - ${CARLA_PORT_SECOND:?error}
+      - ${CARLA_PORT_THIRD:?error}
+    healthcheck:
+      test: ['CMD', 'printf', '"GET / HTTP/1.1\n\n" > /dev/tcp/127.0.0.1/${CARLA_PORT_BASE:?error}']
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 5s
+    command: ssh -i /run/secrets/carla_ssh_key -o StrictHostKeyChecking=no -4 -L *:${CARLA_PORT_BASE:?error}:${CARLA_LOCAL_HOST:?error}:${CARLA_PORT_BASE:?error} -L *:${CARLA_PORT_SECOND:?error}:${CARLA_LOCAL_HOST:?error}:${CARLA_PORT_SECOND:?error} -L *:${CARLA_PORT_THIRD:?error}:${CARLA_LOCAL_HOST:?error}:${CARLA_PORT_THIRD:?error} ${REMOTE_USERNAME:?error}@${REMOTE_HOST:?error}
+
+  carla_ingest:
+    build:
+      dockerfile: ./deployment/carla-tools/carla-tools.dockerfile
+      context: ../../
+    depends_on:
+      carla_proxy:
+        condition: service_healthy
+    environment:
+      - CARLA_URL=carla_proxy
+      - CARLA_PORT=${CARLA_PORT_BASE:?error}
+      - PYTHONPATH=/code/src
+    volumes:
+      - "../../:/code"
+    command: python3 /code/src/location_cloaking/utils/map/ingest.py
+
+  carla_generate_traffic:
+    build:
+      context: ../../
+      dockerfile: ./deployment/carla-tools/carla-tools.dockerfile
+    depends_on:
+      carla_ingest:
+        condition: service_completed_successfully
+    environment:
+      - CARLA_URL=carla_proxy
+      - CARLA_PORT=${CARLA_PORT_BASE:?error}
+      - PYTHONPATH=/code/src
+    volumes:
+      - "../../:/code"
+    command: python3 /code/src/location_cloaking/utils/map/generate_random_traffic.py
+
+  carla_visualization_backend:
+    build:
+      context: ../../
+      dockerfile: ./deployment/carla-tools/carla-tools.dockerfile
+    depends_on:
+      - carla_generate_traffic
+    environment:
+      - CARLA_URL=carla_proxy
+      - CARLA_PORT=${CARLA_PORT_BASE:?error}
+      - PYTHONPATH=/code/src
+    expose:
+      - ${CARLA_VISUALIZATION_BACKEND_PORT:-8200}
+    ports:
+      - ${CARLA_VISUALIZATION_BACKEND_PORT:-8200}:8200
+    volumes:
+      - "../../:/code"
+    command: python3 /code/src/carla_visualization/server.py
+
+  # NOTE: This spins up a production build of the frontend. 
+  #   If you are actively working on the frontend, you can just disable this
+  #   service and run the normal frontend's dev server and connect that
+  #   to the carla_visualization_backend.
+  carla_visualization_frontend:
+    build: 
+      context: ${CARLA_VISUALIZATION_FRONTEND_ROOT_DIRECTORY:?error}
+    depends_on:
+      - carla_visualization_backend
+    ports:
+      - ${CARLA_VISUALIZATION_FRONTEND:-8080}:3000
+
+secrets:
+   carla_ssh_key:
+     file: ${REMOTE_SSH_KEY_FILE:?error}
