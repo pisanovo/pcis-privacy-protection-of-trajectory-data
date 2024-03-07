@@ -47,7 +47,7 @@ Instructions:
        
 6. Copy the result from step 5 and replace it with the north, south, east and west bounds in the open_drive generated
    in step 3
-7. Load the map into Carla with ingest.py
+7. Load the modified map from step 3+6 into Carla with ingest.py
 """
 
 OSM_MAP_PATH = "../map/map_files/map_uni_l.osm"

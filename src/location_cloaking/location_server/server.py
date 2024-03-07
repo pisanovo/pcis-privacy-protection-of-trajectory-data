@@ -45,6 +45,7 @@ async def use(websocket, init_msg: MsgClientLSInit):
         alias=init_msg.alias,
         websocket=websocket,
         granularities=[],
+        vicinity_shape={},
         proximate_users=[],
         groups=[],
         max_level=0
@@ -62,10 +63,10 @@ async def use(websocket, init_msg: MsgClientLSInit):
         async for message in websocket:
             event = json.loads(message)
 
-            if event["type"] == "MsgUserLSIncUpd":
+            if event["type"] == MsgUserLSIncUpd.__name__:
                 upd = MsgUserLSIncUpd.from_json(message)
                 await on_message_received(user, upd, data)
-            elif event["type"] == "MsgUserLSGroupJoin":
+            elif event["type"] == MsgUserLSGroupJoin.__name__:
                 join_msg = MsgUserLSGroupJoin.from_json(message)
 
                 # Received invalid group id
@@ -83,7 +84,7 @@ async def use(websocket, init_msg: MsgClientLSInit):
                 else:
                     user.groups.append(group)
                     group.users.append(user)
-            elif event["type"] == "MsgUserLSGroupLeave":
+            elif event["type"] == MsgUserLSGroupLeave.__name__:
                 leave_msg = MsgUserLSGroupLeave.from_json(message)
                 try:
                     group = data.groups[leave_msg.id]
@@ -96,7 +97,7 @@ async def use(websocket, init_msg: MsgClientLSInit):
                         group.users.remove(user)
                 except KeyError:
                     await error(websocket, MsgErrorInvalidGroup)
-            elif event["type"] == "MsgUserLSPolicyChange":
+            elif event["type"] == MsgUserLSPolicyChange.__name__:
                 new_policy_msg = MsgUserLSPolicyChange.from_json(message)
                 user = [u for u in data.users if u.id == new_policy_msg.user_id][0]
 
@@ -128,6 +129,19 @@ async def observe(websocket):
         data.observers.append(websocket)
         # Send confirmation together with plane data
         await websocket.send(MsgLSClientInitComplete(plane_data=data.plane_data, user_id=-1).to_json())
+        # TODO: Send full state to synchronize user
+        users_sync: List[UserSync] = []
+        for user in data.users:
+            users_sync.append(UserSync(
+                user_id=user.id,
+                alias=user.alias,
+                level=0 if len(user.granularities) == 0 else len(user.granularities) - 1,
+                granularities=user.granularities,
+                vicinity_shape=user.vicinity_shape
+            ))
+
+        await websocket.send(MsgLSObserverSync(users=users_sync).to_json())
+
         # Keep the connection open, but don't receive any messages
         await websocket.wait_closed()
     finally:

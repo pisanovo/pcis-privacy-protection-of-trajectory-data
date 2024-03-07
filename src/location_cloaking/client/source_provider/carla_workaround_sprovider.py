@@ -1,33 +1,29 @@
 import re
-import time
-
-import carla
+import websockets
 from typing import List
-
-from carla import World
-
+from carla_visualization.model.messages import MsgClientVsPositionRequest, MsgVsClientPositionResponse
 from location_cloaking.client.source_provider.source_provider import SourceProvider
 from location_cloaking.client.model.data import Position, ClientInstance, VicinityCircleShape, Policy, VicinityShape
 
 
-class CarlaSourceProvider(SourceProvider):
+class CarlaWorkaroundSourceProvider(SourceProvider):
 
     def __init__(self, source_instance_data: dict):
-        from location_cloaking.config import CarlaConfig
-        self._client = carla.Client(CarlaConfig.HOST, CarlaConfig.PORT)
-        self._client.set_timeout(CarlaConfig.TIMEOUT)
-        self._carla_world: World = self._client.get_world()
         self._carla_id = source_instance_data["id"]
 
     async def get_latest_position(self) -> Position:
-        # In synchronous mode getting actors might return nothing until a tick passed
-        while len(self._carla_world.get_actors()) == 0:
-            pass
+        from location_cloaking.config import LocationServerConfig
+        uri = f"ws://{LocationServerConfig.LISTEN_HOST}:8200/carla/position"
 
-        actor: carla.Actor = self._carla_world.get_actors().find(self._carla_id)
-        actor_position: carla.Location = actor.get_location()
+        async with websockets.connect(uri) as websocket:
+            await websocket.send(MsgClientVsPositionRequest(
+                agent_id=self._carla_id
+            ).to_json())
 
-        return Position(actor_position.x, actor_position.y)
+            message = await websocket.recv()
+            msg = MsgVsClientPositionResponse.from_json(message)
+
+            return Position(msg.x, msg.y)
 
     @staticmethod
     def get_instances_from_cmd(cmd_input: List[str]) -> List[ClientInstance]:

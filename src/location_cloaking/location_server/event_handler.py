@@ -66,6 +66,9 @@ async def on_message_received(user: LSUser, upd: MsgUserLSIncUpd, data: Location
     :param upd: Information containing new position and vicinity
     :param data:
     """
+    if upd.level > user.max_level or upd.level < 0:
+        raise ValueError
+
     if data.observers:
         # Broadcast incremental update to observers
         websockets.broadcast(data.observers, MsgLSObserverIncUpd(
@@ -78,8 +81,7 @@ async def on_message_received(user: LSUser, upd: MsgUserLSIncUpd, data: Location
             vicinity_shape=upd.vicinity_shape
         ).to_json())
 
-    if upd.level > user.max_level or upd.level < 0:
-        raise ValueError
+    user.vicinity_shape = upd.vicinity_shape
 
     # Truncate granularities list if level received is lower
     del user.granularities[upd.level + 1:]

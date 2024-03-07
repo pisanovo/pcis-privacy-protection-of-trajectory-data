@@ -14,6 +14,18 @@ class Message(JSONWizard):
 
 
 @dataclass
+class MsgClientVsPositionRequest(Message):
+    agent_id: int
+    type = "PositionRequest"
+
+@dataclass
+class MsgVsClientPositionResponse(Message):
+    x: float
+    y: float
+    type = "PositionResponse"
+
+
+@dataclass
 class MsgVsVcAgentLocationUpd(Message):
     data: List[CarlaAgentData]
     type = "LocationUpdate"
@@ -23,3 +35,15 @@ class MsgVsVcAgentLocationUpd(Message):
 class MsgVsVcAgents(Message):
     data: List[str]
     type = "Agents"
+
+
+@dataclass
+class MsgVsVcClientConfigSync(Message):
+    data: str
+    type = "ConfigSync"
+
+
+@dataclass
+class MsgVcVsClientConfigUpd(Message):
+    data: str
+    type = "ConfigUpdate"

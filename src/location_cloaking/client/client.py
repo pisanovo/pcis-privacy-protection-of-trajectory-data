@@ -2,6 +2,8 @@ import argparse
 import asyncio
 import json
 import logging
+import os
+import sys
 import traceback
 import websockets
 from typing import Type, List
@@ -14,6 +16,17 @@ from location_cloaking.logging import setup_logger
 from location_cloaking.model.messages import MsgClientLSInit
 
 logger = setup_logger(__name__, level=logging.DEBUG)
+
+
+async def configuration_change_handler(config_file_data: str):
+    while True:
+        with open(args.file[0][0]) as f:
+            new_data = f.read().rstrip()
+
+            if new_data != config_file_data:
+                os.execv(sys.executable, ['python'] + sys.argv)
+
+        await asyncio.sleep(1.0)
 
 
 async def message_handler(websocket, location_handler: LocationHandler):
@@ -100,9 +113,12 @@ async def client(instance: ClientInstance):
         )
 
 
-async def main(instances: List[ClientInstance]):
+async def main(instances: List[ClientInstance], config_file_data: str):
     # Start all client instances
-    await asyncio.gather(*[client(instance) for instance in instances])
+    await asyncio.gather(
+        configuration_change_handler(config_file_data),
+        *[client(instance) for instance in instances]
+    )
 
 
 if __name__ == "__main__":
@@ -135,10 +151,13 @@ if __name__ == "__main__":
         cmd_instances = ClientConfig.SOURCE_PROVIDER.get_instances_from_cmd(args.user)
         client_instances.extend(cmd_instances)
 
+    file_data_as_string = None
+
     # Fetch client instance information from file if the user provided a file path
     if args.file is not None:
         with open(args.file[0][0]) as f:
-            data = json.load(f)
+            file_data_as_string = f.read().rstrip()
+            data = json.loads(file_data_as_string)
 
         file_instances = ClientConfig.SOURCE_PROVIDER.get_instances_from_json(data)
         client_instances.extend(file_instances)
@@ -154,7 +173,7 @@ if __name__ == "__main__":
         raise ValueError("Found duplicate alias ids.")
 
     try:
-        asyncio.run(main(client_instances))
+        asyncio.run(main(client_instances, file_data_as_string))
     except:
         traceback.print_exc()
     finally:

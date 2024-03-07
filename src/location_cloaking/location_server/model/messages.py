@@ -2,7 +2,7 @@
 from dataclasses import dataclass
 from typing import Optional, List
 
-from location_cloaking.model.data import GranularityPlaneDimensions
+from location_cloaking.model.data import GranularityPlaneDimensions, EncryptedGranularityLevel
 from location_cloaking.model.messages import MsgIncrementalUpdate, Message, MessageError
 
 
@@ -12,7 +12,7 @@ from location_cloaking.model.messages import MsgIncrementalUpdate, Message, Mess
 @dataclass
 class MsgLSClientInitComplete(Message):
     user_id: int
-    type = "InitComplete"
+    type: str = "InitComplete"
     plane_data: GranularityPlaneDimensions = None
 
 
@@ -46,6 +46,22 @@ class MsgLSUserLevelIncrease(Message):
 class MsgLSObserverIncUpd(MsgIncrementalUpdate):
     alias: List[str]
     type: str = "MsgLSObserverIncUpd"
+
+
+@dataclass
+class UserSync:
+    user_id: int
+    alias: List[str]
+    level: int
+    granularities: List[EncryptedGranularityLevel]
+    vicinity_shape: dict
+
+
+# TODO: Implement sync dataclass
+@dataclass
+class MsgLSObserverSync(Message):
+    users: List[UserSync]
+    type: str = "MsgLSObserverSync"
 
 
 @dataclass

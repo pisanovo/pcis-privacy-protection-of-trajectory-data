@@ -13,8 +13,8 @@ import math
 class LocationHandler:
     def __init__(self, location_provider: SourceProvider, plane_dim: GranularityPlaneDimensions, policy: Policy,
                  user_id: int):
-        self._location_provider: CarlaSourceProvider = location_provider
-        self._last_position: Position = self._location_provider.get_latest_position()
+        self._location_provider = location_provider
+        # self._last_position: Position = await self._location_provider.get_latest_position()
         self._plane_dim: GranularityPlaneDimensions = plane_dim
         self._policy: Policy = policy
         self._granularity_stack: list[GranularityLevel] = []
@@ -227,13 +227,13 @@ class LocationHandler:
         :param websocket: The client-server websocket connection
         """
         # Fetch latest position
-        new_position = self._location_provider.get_latest_position()
+        new_position = await self._location_provider.get_latest_position()
 
         # If the position changed then we might have to modify the granularity stack and inform the location server
-        if not self._last_position or new_position.x != self._last_position.x or new_position.y != self._last_position.y:
+        # if not self._last_position or new_position.x != self._last_position.x or new_position.y != self._last_position.y:
             # Copy the old (current) granularity stack for comparisons with an updated granularity stack
-            self._old_granularity_stack = self._granularity_stack.copy()
-            await self.on_location_change(new_position, websocket)
+        self._old_granularity_stack = self._granularity_stack.copy()
+        await self.on_location_change(new_position, websocket)
 
     async def on_message_received(self, m_lvl_inc: MsgLSUserLevelIncrease, websocket):
         """
@@ -244,7 +244,7 @@ class LocationHandler:
         :param websocket: The client-server websocket connection
         """
         # Fetch latest position
-        new_position = self._location_provider.get_latest_position()
+        new_position = await self._location_provider.get_latest_position()
         # Contains the current granularity stack length
         gs_len = len(self._granularity_stack)
 
