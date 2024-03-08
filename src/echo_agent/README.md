@@ -21,8 +21,7 @@ All modules are flask based python applications. They communicate via REST calls
 
 The echo_agent expects the following things:
 1. An instance of carla simulator running, with cars randomly driving around in it.
-2. A mongo_db database to store the echo_agent's state in.
-3. Each module to be run as a flask application.
+2. Each module to be run as a flask application.
 
 **To run the application, we recommend using docker compose, as specified in the main [Readme.md](../../Readme.md).**
 
@@ -38,7 +37,7 @@ The echo_agent expects the following things:
 > client module from this prototype.
 
 `[GET]/health`:
-    Returns ok if itself and all downstream services work by sending a health check through the application - client, echo_agent, mongo_db, location_based_service.
+    Returns ok if itself and all downstream services work by sending a health check through the application - client, echo_agent, location_based_service.
 
 `[GET]/start`:
     Attach to a car driving around in carla. You can attach to multiple cars by calling this route multiple times.
@@ -50,7 +49,7 @@ The echo_agent expects the following things:
 
 `[GET]/health`:
     Returns ok if itself and all downstream services work by sending a health check through the application
-    - echo_agent, mongo_db, location_based_service. Is called by the client's healthcheck.
+    - echo_agent, location_based_service. Is called by the client's healthcheck.
     
 `[GET]/anonymous_resource?x=<client x coordinate>&y=<client y coordinate>&user_id=<client id>&service_name=service`:
     This is the route the client calls to reach the location based service anonymously. It passes it's id, 
@@ -71,7 +70,7 @@ The echo_agent expects the following things:
     details of the algorithms internals)
 
 > NOTE: There is no route to flush the dummy and user movement storage.
-> This should be handled directly through the mongo db instance, e.g. by deleting its docker volume.
+> This should be done by resetting the persistent storage provided by docker.
 
 ### Location Based Service
 

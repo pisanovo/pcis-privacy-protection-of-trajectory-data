@@ -1,6 +1,5 @@
 carla==0.9.14
 Flask
 flask-cors
-pymongo
 numpy
 requests
