@@ -2,6 +2,9 @@ import time
 import random
 from copy import deepcopy
 from flask import json
+import os
+import pickle
+from set_interval import set_interval
 
 # TODO: As soon as we use a real database, ids can be generate by it
 ID_COUNTER = {
@@ -123,3 +126,44 @@ mock_db = {
     "nodes": [],
     "user_movements": [],
 }
+
+#######################
+# Persist the database
+#######################
+
+# Read the path to the storage volume from the environment
+STORAGE_PATH = os.getenv('STORAGE_PATH')
+PREFIX = "user_movement_storage_"
+NODES_FILE = os.path.join(STORAGE_PATH, PREFIX + "nodes.txt")
+USER_MOVEMENTS_FILE = os.path.join(STORAGE_PATH, PREFIX + "user_movements.txt")
+
+# Persist the database in a file
+def write_db_to_file():
+  # Write nodes
+  nodes_file = open(NODES_FILE, "wb") 
+  pickle.dump(mock_db["nodes"], nodes_file) 
+  nodes_file.close() 
+  # Write dummies
+  user_movements_file = open(USER_MOVEMENTS_FILE, "wb")
+  pickle.dump(mock_db["user_movements"], user_movements_file)
+  user_movements_file.close()
+
+# Read the database from a file
+def read_db_from_file():  
+  # read nodes
+  if os.path.exists(NODES_FILE):
+    with open(NODES_FILE, 'rb') as handle: 
+        node_data = handle.read() 
+    mock_db["nodes"] = pickle.loads(node_data) 
+
+  # read dummies
+  if os.path.exists(USER_MOVEMENTS_FILE):
+    with open(USER_MOVEMENTS_FILE, 'rb') as handle: 
+        user_movements_data = handle.read() 
+    mock_db["user_movements"] = pickle.loads(user_movements_data) 
+
+# Initially, read db file
+read_db_from_file()
+
+# Then start writing the db to file every 30 seconds until programm ends
+set_interval(write_db_to_file, 30)

@@ -1,6 +1,8 @@
 import os
 from copy import deepcopy
 from flask import json
+import pickle
+from set_interval import set_interval
 
 NUMBER_OF_DUMMIES = int(os.getenv('NUMBER_OF_DUMMIES'))
 
@@ -95,7 +97,54 @@ def dump_dummies_json():
         dump.append(dummy_dict)
     return json.dumps(dump)
 
+#########################
+# Create a mock database
+# in the RAM
+##########################
+
 mock_db = {
    "nodes": [],
    "dummies": []
 }
+
+
+#######################
+# Persist the database
+#######################
+
+# Read the path to the storage volume from the environment
+STORAGE_PATH = os.getenv('STORAGE_PATH')
+PREFIX = "dummy_storage_"
+NODES_FILE = os.path.join(STORAGE_PATH, PREFIX + "nodes.txt")
+DUMMIES_FILE = os.path.join(STORAGE_PATH, PREFIX + "dummies.txt")
+
+# Persist the database in a file
+def write_db_to_file():
+  # Write nodes
+  nodes_file = open(NODES_FILE, "wb") 
+  pickle.dump(mock_db["nodes"], nodes_file) 
+  nodes_file.close() 
+  # Write dummies
+  dummies_file = open(DUMMIES_FILE, "wb")
+  pickle.dump(mock_db["dummies"], dummies_file)
+  dummies_file.close()
+
+# Read the database from a file
+def read_db_from_file():  
+  # read nodes
+  if os.path.exists(NODES_FILE):
+    with open(NODES_FILE, 'rb') as handle: 
+        node_data = handle.read() 
+    mock_db["nodes"] = pickle.loads(node_data) 
+
+  # read dummies
+  if os.path.exists(DUMMIES_FILE):
+    with open(DUMMIES_FILE, 'rb') as handle: 
+        dummies_data = handle.read() 
+    mock_db["dummies"] = pickle.loads(dummies_data) 
+
+# Initially, read db file
+read_db_from_file()
+
+# Then start writing the db to file every 30 seconds until programm ends
+set_interval(write_db_to_file, 30)

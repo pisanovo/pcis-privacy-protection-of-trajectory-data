@@ -70,7 +70,7 @@ The echo_agent expects the following things:
     details of the algorithms internals)
 
 > NOTE: There is no route to flush the dummy and user movement storage.
-> This should be done by resetting the persistent storage provided by docker.
+> This should be done by resetting the persistent storage provided by docker (e.g. `docker compose down -v`)
 
 ### Location Based Service
 

@@ -1,22 +1,13 @@
 import carla
 import random
 import time
-import threading
 import requests
 import os
+from set_interval import set_interval
 
 CARLA_URL = str(os.getenv('CARLA_URL'))
 CARLA_PORT = int(os.getenv('CARLA_PORT'))
 ECHO_AGENT_URL = str(os.getenv('ECHO_AGENT_URL'))
-
-# Helpers
-def set_interval(func, sec):
-  def func_wrapper():
-      set_interval(func, sec) 
-      func()  
-  t = threading.Timer(sec, func_wrapper)
-  t.start()
-  return t
 
 # Returns true if actors are available on the world in time
 def wait_for_actors(world, retry_count = 10):

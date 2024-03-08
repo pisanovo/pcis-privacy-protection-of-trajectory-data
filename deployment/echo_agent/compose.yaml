@@ -27,12 +27,13 @@ services:
       dockerfile: ../../deployment/echo_agent/dockerfile
     depends_on:
       - location_based_service
-    # somehow need to wait until db is ACTUALLY ready and not just healthy.
     volumes:
       - "../../src/echo_agent/modules/echo_agent/:/code"
+      - "echo_agent_storage:/storage:rw"
     environment:
       - LOCATION_SERVER_URL=http://location_based_service:5000
       - NUMBER_OF_DUMMIES=3
+      - STORAGE_PATH=/storage
     ports:
       - ${ECHO_AGENT_ECHO_AGENT_PORT:-5001}:5000 # browser must be able to access it
     
@@ -46,3 +47,6 @@ services:
       - ${ECHO_AGENT_LOCATION_BASED_SERVICE_PORT:-5002}:5000 # browser must be able to access it
     volumes:
       - "../../src/echo_agent/modules/location_based_service/:/code"
+
+volumes:
+  echo_agent_storage:
