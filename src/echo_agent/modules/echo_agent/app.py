@@ -49,7 +49,7 @@ def get_anonymous_resource():
     for dummy_location in dummy_locations:
       requests.get(
         LOCATION_SERVER_URL + '/service',
-        params={'x': dummy_location['x'], 'y': dummy_location['y']}
+        params={'x': dummy_location.x, 'y': dummy_location.y}
       )
     # Forward real response, in this case, if service returned ok
     if response.ok:

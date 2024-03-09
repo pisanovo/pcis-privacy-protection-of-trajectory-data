@@ -10,13 +10,14 @@ NUMBER_OF_DUMMIES = int(os.getenv('NUMBER_OF_DUMMIES'))
 # Then moves all dummies one step forward.
 def get_dummies_for_user(user_id):
   # 1. Load user dummies from storage. If user has none, assign some.
+  dummies = get_dummies_from_db(user_id)
   
   # 2. Collect current locations from each dummy. 
-  dummies = get_dummies_from_db(user_id)
   current_locations = []
   for dummy in dummies:
-    current_node_id = dummy.Curr_Node
-    current_node = dummy.Node_List[current_node_id]
+    current_node_index = dummy.Curr_Node
+    current_node_id = dummy.Node_List[current_node_index]
+    current_node = get_node(current_node_id)
     current_locations.append(current_node)
 
   # 3. Move each dummy one node forward.
@@ -66,7 +67,7 @@ def get_dummies_from_db(user_id):
 
     if dummy.Assigned_User == None:
       dummies.append(dummy)
-      dummy.Assigned_User == user_id
+      dummy.Assigned_User = user_id
 
   return dummies
 
@@ -74,8 +75,8 @@ def get_dummies_from_db(user_id):
 # unless dummy has already reached end of its node list
 def move_dummy_in_db(dummy_id):
   # TODO: Implement DB access
-  for dummy in mock_db:
-    if dummy.D_no == dummy_id and dummy.Curr_Node < dummy.No_of_Nodes - 1:
+  for dummy in mock_db["dummies"]:
+    if dummy.D_No == dummy_id and dummy.Curr_Node < dummy.No_of_Nodes - 1:
         dummy.Curr_Node += 1
   return
 
@@ -134,13 +135,13 @@ def read_db_from_file():
   # read nodes
   if os.path.exists(NODES_FILE):
     with open(NODES_FILE, 'rb') as handle: 
-        node_data = handle.read() 
+        node_data = handle.read()
     mock_db["nodes"] = pickle.loads(node_data) 
 
   # read dummies
   if os.path.exists(DUMMIES_FILE):
     with open(DUMMIES_FILE, 'rb') as handle: 
-        dummies_data = handle.read() 
+        dummies_data = handle.read()
     mock_db["dummies"] = pickle.loads(dummies_data) 
 
 # Initially, read db file
