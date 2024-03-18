@@ -5,7 +5,7 @@ import websockets
 from typing import List
 import pyproj
 from carla import Map
-from carla_visualization.model.data import CarlaData, Location, CarlaAgentData
+from carla_visualization.model.data import CarlaData, Location, CarlaAgentData, Speed
 from carla_visualization.model.messages import MsgVsVcAgentLocationUpd, MsgVsVcAgents, MsgVcVsClientConfigUpd, \
     MsgVsVcClientConfigSync, MsgClientVsPositionRequest, MsgVsClientPositionResponse
 from location_cloaking.config import LocationServerConfig, CarlaConfig
@@ -53,6 +53,7 @@ async def agents_stream():
 
         for actor in vehicle_actors:
             carla_location: carla.Location = actor.get_location()
+            actor_velocity: carla.Vector3D = actor.get_velocity()
             shifted_loc = carla.Location(x=carla_location.x - 1, y=carla_location.y, z=carla_location.z)
 
             geo_location = g_carla_map.transform_to_geolocation(carla_location)
@@ -65,6 +66,7 @@ async def agents_stream():
             agent = CarlaAgentData(
                 id=f"CARLA-{actor.id}",
                 location=Location(x=geo_location.latitude, y=geo_location.longitude),
+                speed=Speed(velocity_x=actor_velocity.x, velocity_y=actor_velocity.y),
                 great_circle_distance_factor=dist
             )
             agents.append(agent)
@@ -72,6 +74,7 @@ async def agents_stream():
         websockets.broadcast(g_carla_agents_stream_websockets, MsgVsVcAgentLocationUpd(data=agents).to_json())
 
         await asyncio.sleep(1 / 6)
+
 
 async def carla_agents_stream_handler(websocket):
     try:
