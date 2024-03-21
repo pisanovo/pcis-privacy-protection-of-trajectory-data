@@ -27,13 +27,10 @@ async def periodic_vehicle_update(config: ClientConfig, websocket):
             response = MsgVsVcAgentLocationUpd.from_json(message)
 
             updates: List[VehicleUpdate] = [VehicleUpdate(
-                alias=[v.id],
+                id=v.id,
                 speed=v.speed,
                 location=Location(longitude=v.location.x, latitude=v.location.y)
-            ) for v in response.data]
-
-            if config.update_vehicles != "all":
-                updates = [u for u in updates for alias_list in config.update_vehicles if u.alias in alias_list]
+            ) for v in response.data if config.update_vehicles == "all" or v.id in config.update_vehicles]
 
             await websocket.send(MsgClientServerBatchedVehicleUpdate(
                 updates=updates

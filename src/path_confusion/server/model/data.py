@@ -6,9 +6,15 @@ from path_confusion.model.data import Location, Speed
 
 
 @dataclass
+class Interval:
+    # epoch millis
+    start_at: int
+    end_at: int
+
+@dataclass
 class CarlaVehicleData:
     # epoch millis
-    alias: List[str]
+    id: str
     time: int
     speed: Speed
     location: Location
@@ -18,19 +24,19 @@ class CarlaVehicleData:
 class ReleaseEntry:
     # List[str] list of carla agent ids for this interval
     neighbours: List[str]
-    current_gps_sample: Union[Location, None]
     omission_reason: str
 
 
 @dataclass
 class IntervalVehicleEntry:
-    alias: List[str]
-    last_confusion_time: int
-    predicted_loc: Location
-    last_visible: CarlaVehicleData
+    id: str
+    last_confusion_time: int = None
+    current_gps_sample: Location = None
+    predicted_loc: Location = None
+    last_visible: CarlaVehicleData = None
     # List[str] list of carla agent ids for this interval
-    dependencies: List[str]
-    release_data: ReleaseEntry
+    dependencies: List["IntervalVehicleEntry"] = None
+    release_data: ReleaseEntry = None
 
 
 @dataclass
@@ -49,7 +55,7 @@ class AlgorithmSettings:
 
 @dataclass
 class AlgorithmData:
-    intervals: List[IntervalVehicleEntry] = field(default_factory=list)
+    data: List[IntervalVehicleEntry] = field(default_factory=list)
     settings: AlgorithmSettings = AlgorithmSettings()
     is_live: bool = True
 
@@ -57,6 +63,17 @@ class AlgorithmData:
 @dataclass
 class Store:
     entries: List[CarlaVehicleData] = field(default_factory=list)
+
+    def latest_unique_entries(self):
+        visited = []
+        filtered_store = []
+        for v in reversed(self.entries):
+            if v.id not in visited:
+                visited.append(v.id)
+                filtered_store.insert(0, v)
+
+        return filtered_store
+
 
 
 @dataclass

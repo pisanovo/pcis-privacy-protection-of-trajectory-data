@@ -23,7 +23,7 @@ store = Store()
 
 async def wait_on_time_interval():
     while True:
-        next_interval_timeout = await on_new_time_interval(alg_settings=algorithm_data.settings)
+        next_interval_timeout = await on_new_time_interval(alg_data=algorithm_data, store=store)
         await asyncio.sleep(next_interval_timeout)
 
 
