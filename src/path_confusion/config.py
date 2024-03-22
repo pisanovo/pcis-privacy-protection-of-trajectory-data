@@ -18,3 +18,4 @@ class AlgorithmConfig:
 class ServerConfig:
     LISTEN_HOST = "127.0.0.1"
     LISTEN_PORT = 8765
+    RECORDINGS_STORAGE_PATH = "../storage"

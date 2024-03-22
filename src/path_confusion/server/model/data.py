@@ -1,6 +1,8 @@
 from dataclasses import dataclass, field
 from typing import List, Union
 
+from dataclass_wizard import JSONWizard
+
 from path_confusion.config import AlgorithmConfig
 from path_confusion.model.data import Location, Speed
 
@@ -57,6 +59,7 @@ class AlgorithmSettings:
 @dataclass
 class AlgorithmData:
     data: List[IntervalVehicleEntry] = field(default_factory=list)
+    relevant_vehicles: List[str] = field(default_factory=list)
     settings: AlgorithmSettings = AlgorithmSettings()
     is_live: bool = True
 
@@ -81,3 +84,11 @@ class Store:
 class ServerConnections:
     users: List[any] = field(default_factory=list)
     observers: List[any] = field(default_factory=list)
+
+
+@dataclass
+class Dump(JSONWizard):
+    name: str
+    recorded_at_time: int
+    settings: AlgorithmSettings
+    position_entries: List[CarlaVehicleData]

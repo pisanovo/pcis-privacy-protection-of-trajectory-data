@@ -1,31 +1,49 @@
 import copy
+import json
 import math
 import time
+from os import listdir
+from os.path import join, isfile
 from typing import List, Union
 
 import websockets
 from pyproj import Geod
 
 from path_confusion.client.model.data import VehicleUpdate
+from path_confusion.config import ServerConfig
 from path_confusion.model.data import Location
 from path_confusion.server.model.data import Store, AlgorithmSettings, CarlaVehicleData, AlgorithmData, \
-    IntervalVehicleEntry, Interval, ReleaseEntry, ServerConnections
-from path_confusion.server.model.messages import MsgServerClientReleaseUpdate
+    IntervalVehicleEntry, Interval, ReleaseEntry, ServerConnections, Dump
+from path_confusion.server.model.messages import MsgServerClientReleaseUpdate, MsgServerObserverSettingsUpdate, \
+    MsgServerObserverAvailableRecordings, MsgServerObserverRelevantVehicles
 
 
 async def on_new_time_interval(alg_data: AlgorithmData, store: Store, con: ServerConnections):
     now = int(time.time())
+
+    # first interval starts with first position update
+    if not alg_data.data and not store.position_entries:
+        return now + alg_data.settings.time_interval - time.time()
+    elif not alg_data.data:
+        first_position_entry = min(store.position_entries, key=lambda x: x.time)
+        first_interval_end = first_position_entry.time + alg_data.settings.time_interval
+        now = first_interval_end
+
     interval = Interval(start_at=int(now - alg_data.settings.time_interval), end_at=now)
 
     release_interval_store = algorithm(interval, alg_data, store)
     store.release_entries.extend(release_interval_store)
 
-    await broadcast_store(store.release_entries, con)
+    await broadcast_release_store(store, con)
+    await broadcast_available_vehicles(store, con)
 
-    return now + alg_data.settings.time_interval - time.time()
+    return interval.end_at + alg_data.settings.time_interval - time.time()
 
 
-async def on_batch_update(batch_update: List[VehicleUpdate], store: Store, alg_settings: AlgorithmSettings):
+async def on_batch_update(batch_update: List[VehicleUpdate], store: Store, alg_data: AlgorithmData):
+    if not alg_data.is_live:
+        return
+
     time_received = int(time.time())
 
     for v_upd in batch_update:
@@ -37,29 +55,147 @@ async def on_batch_update(batch_update: List[VehicleUpdate], store: Store, alg_s
 
         last_vehicle_update = ([e for e in reversed(store.position_entries) if e.id == v_upd.id][0:1] or [None])[0]
 
-        if last_vehicle_update and last_vehicle_update.time + alg_settings.update_rate <= time_received:
+        if last_vehicle_update and last_vehicle_update.time + alg_data.settings.update_rate <= time_received:
             store.position_entries.append(vehicle_data)
         elif not last_vehicle_update:
             store.position_entries.append(vehicle_data)
 
 
-async def broadcast_store(release_store: List[ReleaseEntry], con: ServerConnections):
+async def on_save_recording(recording_name: str, alg_data: AlgorithmData, store: Store, con: ServerConnections):
+    now = int(time.time())
+
+    dump = Dump(
+        name=recording_name,
+        recorded_at_time=now,
+        settings=alg_data.settings,
+        position_entries=store.position_entries
+    )
+
+    with open(f"{ServerConfig.RECORDINGS_STORAGE_PATH}/{now}_{recording_name}.dump", "w", encoding="utf-8") as f:
+        json.dump(dump.to_json(), f, ensure_ascii=False, indent=4)
+
+    # Send available recordings
+    await broadcast_available_recordings(con)
+
+
+async def on_load_recording(recording_file_name: str, alg_data: AlgorithmData, store: Store, con: ServerConnections):
+    with open(f"{ServerConfig.RECORDINGS_STORAGE_PATH}/{recording_file_name}") as f:
+        j = json.load(f)
+
+    if j:
+        dump: Dump = Dump.from_json(j)
+        alg_data.is_live = False
+        alg_data.settings = dump.settings
+        store.position_entries = dump.position_entries
+
+        rebuild_store(alg_data, store)
+
+        await broadcast_release_store(store, con)
+        await broadcast_available_vehicles(store, con)
+
+
+async def on_go_live(alg_data: AlgorithmData, store: Store, con: ServerConnections):
+    if not alg_data.is_live:
+        alg_data.data = []
+        store.release_entries = []
+        store.position_entries = []
+
+        await broadcast_release_store(store, con)
+        await broadcast_available_vehicles(store, con)
+        await broadcast_settings(alg_data, con)
+
+        alg_data.is_live = True
+
+
+async def on_relevant_vehicles_change(relevant_vehicles: List[str], alg_data: AlgorithmData, store: Store, con: ServerConnections):
+    alg_data.relevant_vehicles = relevant_vehicles
+
+    rebuild_store(alg_data, store)
+
+    await broadcast_release_store(store, con)
+    await broadcast_available_vehicles(store, con)
+
+
+async def on_settings_change(new_settings: AlgorithmSettings, alg_data: AlgorithmData, store: Store, con: ServerConnections):
+    if new_settings.update_rate != alg_data.settings.update_rate:
+        alg_data.data = []
+        store.release_entries = []
+        store.position_entries = []
+        alg_data.is_live = True
+    else:
+        rebuild_store(alg_data, store)
+
+    await broadcast_release_store(store, con)
+    await broadcast_available_vehicles(store, con)
+    await broadcast_settings(alg_data, con)
+
+
+async def broadcast_available_vehicles(store: Store, con: ServerConnections):
+    available_vehicles_ids = [e.id for e in store.position_entries]
     if con.observers:
-        websockets.broadcast(con.observers, MsgServerClientReleaseUpdate(
-            release_store=release_store
+        websockets.broadcast(con.observers, MsgServerObserverRelevantVehicles(
+            ids=available_vehicles_ids
         ).to_json())
 
+
+async def broadcast_release_store(store: Store, con: ServerConnections):
+    if con.observers:
+        websockets.broadcast(con.observers, MsgServerClientReleaseUpdate(
+            release_store=store.release_entries
+        ).to_json())
+
+    # TODO: Add slimmed down version of the release store for actual users (no info on uncertainty etc. needed)
     if con.users:
         websockets.broadcast(con.users, MsgServerClientReleaseUpdate(
-            release_store=release_store
+            release_store=store.release_entries
         ).to_json())
+
+
+async def broadcast_settings(alg_data: AlgorithmData, con: ServerConnections):
+    if con.observers:
+        websockets.broadcast(con.observers, MsgServerObserverSettingsUpdate(
+            settings=alg_data.settings,
+            is_live=alg_data.is_live
+        ).to_json())
+
+
+async def broadcast_available_recordings(con: ServerConnections):
+    if con.observers:
+        path = ServerConfig.RECORDINGS_STORAGE_PATH
+        recording_file_names = [f for f in listdir(path) if isfile(join(path, f))]
+
+        websockets.broadcast(con.observers, MsgServerObserverAvailableRecordings(
+            file_names=recording_file_names
+        ).to_json())
+
+
+def rebuild_store(alg_data: AlgorithmData, store: Store):
+    alg_data.data = []
+    store.release_entries = []
+
+    if store.position_entries:
+        first_position_entry = min(store.position_entries, key=lambda x: x.time)
+        interval = Interval(start_at=first_position_entry.time,
+                            end_at=int(first_position_entry.time + alg_data.settings.time_interval))
+
+        while True:
+            release_interval_store = algorithm(interval, alg_data, store)
+            store.release_entries.extend(release_interval_store)
+
+            interval = Interval(start_at=interval.end_at,
+                                end_at=int(interval.end_at + alg_data.settings.time_interval))
+
+            if len([v for v in store.position_entries if v.time >= interval.start_at]) == 0:
+                break
 
 
 def algorithm(interval: Interval, alg_data: AlgorithmData, in_store: Store):
     g = Geod(ellps='WGS84')
 
     store: Store = copy.deepcopy(in_store)
-    time_interval_store = [v for v in store.latest_unique_entries() if interval.start_at <= v.time <= interval.end_at]
+    def is_vehicle_relevant(idx): return not alg_data.relevant_vehicles or idx in alg_data.relevant_vehicles
+    time_interval_store = [v for v in store.latest_unique_entries()
+                           if interval.start_at <= v.time < interval.end_at and is_vehicle_relevant(v.id)]
     release_interval_store: List[ReleaseEntry] = []
 
     for v_int in time_interval_store:
