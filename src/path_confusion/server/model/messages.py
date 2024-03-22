@@ -10,6 +10,11 @@ from path_confusion.server.model.data import ReleaseEntry, AlgorithmSettings
 
 
 @dataclass
+class MsgServerActionComplete(Message):
+    type: str = "MsgServerActionComplete"
+
+
+@dataclass
 class MsgServerClientConfigUpdate(Message):
     new_config: ClientConfig
     type: str = "MsgServerClientConfigUpdate"

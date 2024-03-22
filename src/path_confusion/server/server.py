@@ -18,7 +18,7 @@ from path_confusion.server.model.data import ServerConnections, AlgorithmData, S
 from path_confusion.server.model.messages import MsgServerClientConfigUpdate, MsgServerObserverSettingsUpdate, \
     MsgServerObserverAvailableRecordings, MsgServerClientReleaseUpdate, MsgObserverServerAddRecording, \
     MsgObserverServerLoadRecording, MsgObserverServerChangeSettings, MsgServerObserverRelevantVehicles, \
-    MsgObserverServerChangeRelevantVehicles
+    MsgObserverServerChangeRelevantVehicles, MsgServerActionComplete
 
 logger = setup_logger(__name__, level=logging.DEBUG)
 
@@ -101,6 +101,8 @@ async def observe(websocket):
             elif event["type"] == MsgObserverServerChangeRelevantVehicles.__name__:
                 msg = MsgObserverServerChangeRelevantVehicles.from_json(message)
                 await on_relevant_vehicles_change(msg.ids, algorithm_data, store, connections)
+
+            await websocket.send(MsgServerActionComplete().to_json())
 
     finally:
         connections.observers.remove(websocket)
