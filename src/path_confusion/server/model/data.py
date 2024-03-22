@@ -11,6 +11,7 @@ class Interval:
     start_at: int
     end_at: int
 
+
 @dataclass
 class CarlaVehicleData:
     # epoch millis
@@ -18,13 +19,6 @@ class CarlaVehicleData:
     time: int
     speed: Speed
     location: Location
-
-
-@dataclass
-class ReleaseEntry:
-    # List[str] list of carla agent ids for this interval
-    neighbours: List[str]
-    omission_reason: str
 
 
 @dataclass
@@ -36,7 +30,14 @@ class IntervalVehicleEntry:
     last_visible: CarlaVehicleData = None
     # List[str] list of carla agent ids for this interval
     dependencies: List["IntervalVehicleEntry"] = None
-    release_data: ReleaseEntry = None
+
+
+@dataclass
+class ReleaseEntry:
+    created_at_time: int
+    vehicle_entry: IntervalVehicleEntry
+    uncertainty: Union[float, None] = None
+    is_in_release_set: bool = False
 
 
 @dataclass
@@ -62,18 +63,18 @@ class AlgorithmData:
 
 @dataclass
 class Store:
-    entries: List[CarlaVehicleData] = field(default_factory=list)
+    position_entries: List[CarlaVehicleData] = field(default_factory=list)
+    release_entries: List[ReleaseEntry] = field(default_factory=list)
 
     def latest_unique_entries(self):
         visited = []
         filtered_store = []
-        for v in reversed(self.entries):
+        for v in reversed(self.position_entries):
             if v.id not in visited:
                 visited.append(v.id)
                 filtered_store.insert(0, v)
 
         return filtered_store
-
 
 
 @dataclass

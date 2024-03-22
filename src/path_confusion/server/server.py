@@ -23,8 +23,9 @@ store = Store()
 
 async def wait_on_time_interval():
     while True:
-        next_interval_timeout = await on_new_time_interval(alg_data=algorithm_data, store=store)
-        await asyncio.sleep(next_interval_timeout)
+        if algorithm_data.is_live:
+            next_interval_timeout = await on_new_time_interval(alg_data=algorithm_data, store=store, con=connections)
+            await asyncio.sleep(next_interval_timeout)
 
 
 async def use(websocket):
@@ -43,7 +44,9 @@ async def use(websocket):
 
             if event["type"] == MsgClientServerBatchedVehicleUpdate.__name__:
                 upd = MsgClientServerBatchedVehicleUpdate.from_json(message).updates
-                await on_batch_update(batch_update=upd, store=store, alg_settings=algorithm_data.settings)
+
+                if algorithm_data.is_live:
+                    await on_batch_update(batch_update=upd, store=store, alg_settings=algorithm_data.settings)
             else:
                 raise ValueError
     finally:
