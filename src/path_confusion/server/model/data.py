@@ -27,18 +27,20 @@ class CarlaVehicleData:
 class IntervalVehicleEntry:
     id: str
     last_confusion_time: int = None
-    current_gps_sample: Location = None
+    current_gps_sample: CarlaVehicleData = None
     predicted_loc: Location = None
     last_visible: CarlaVehicleData = None
     # List[str] list of carla agent ids for this interval
-    dependencies: List["IntervalVehicleEntry"] = None
+    dependencies: List[str] = None
+    neighbors: List[str] = None
 
 
 @dataclass
 class ReleaseEntry:
     created_at_time: int
     vehicle_entry: IntervalVehicleEntry
-    uncertainty: Union[float, None] = None
+    uncertainty_interval: Union[float, None] = None
+    uncertainty_release_set: Union[float, None] = None
     is_in_release_set: bool = False
 
 
@@ -69,11 +71,11 @@ class Store:
     position_entries: List[CarlaVehicleData] = field(default_factory=list)
     release_entries: List[ReleaseEntry] = field(default_factory=list)
 
-    def latest_unique_entries(self):
+    def interval_unique_entries(self, interval: Interval):
         visited = []
         filtered_store = []
         for v in reversed(self.position_entries):
-            if v.id not in visited:
+            if v.id not in visited and interval.start_at <= v.time < interval.end_at:
                 visited.append(v.id)
                 filtered_store.insert(0, v)
 

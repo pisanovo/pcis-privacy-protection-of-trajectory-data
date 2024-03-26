@@ -46,9 +46,26 @@ class MsgObserverServerAddRecording(Message):
 
 
 @dataclass
+class MsgObserverServerGoLive(Message):
+    name: str
+    type: str = "MsgObserverServerGoLive"
+
+
+@dataclass
+class MsgObserverServerReset(Message):
+    type: str = "MsgObserverServerReset"
+
+
+@dataclass
 class MsgObserverServerLoadRecording(Message):
     recording_file_name: str
     type: str = "MsgObserverServerLoadRecording"
+
+
+@dataclass
+class MsgObserverServerDeleteRecording(Message):
+    recording_file_name: str
+    type: str = "MsgObserverServerDeleteRecording"
 
 
 @dataclass
@@ -58,9 +75,10 @@ class MsgObserverServerChangeSettings(Message):
 
 
 @dataclass
-class MsgServerObserverRelevantVehicles(Message):
-    ids: List[str]
-    type: str = "MsgServerObserverRelevantVehicles"
+class MsgServerObserverVehicles(Message):
+    available_vehicles: List[str]
+    relevant_vehicles: List[str]
+    type: str = "MsgServerObserverVehicles"
 
 
 @dataclass
