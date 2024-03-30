@@ -13,7 +13,7 @@ Implementation based on the algorithm described in the [paper by Hoh et al](http
 
 ![Structure](./img/Path_Cloaking_Structure.png)
 
-The echo agent prototype consists of two modules:
+The path cloaking prototype consists of two modules:
 1. The [client](./client), which corresponds to a set of cars driving around within the Carla simulator.
    It forwards the positions of vehicles to the server every `update_rate` seconds.
 2. The [server](./server), a trusted party which runs the path cloaking algorithm at the end of every interval. 

@@ -318,17 +318,19 @@ def algorithm(interval: Interval, alg_data: AlgorithmData, in_store: Store):
         release_entry.is_in_release_set = True
 
         vehicle.last_visible = vehicle.current_gps_sample
-        kn = k_nearest(vehicle, release_set, alg_data.settings.k_anonymity, g)
-        neighbors = [e.id for e in kn]
 
-        if vehicle.last_confusion_time != interval.end_at:
-            uncertainty_release_set = uncertainty(vehicle.predicted_loc, kn, g, alg_data.settings)
-            release_entry.uncertainty_release_set = float("{:.3f}".format(uncertainty_release_set))
-            release_entry.vehicle_entry.neighbors = neighbors
+        if vehicle.predicted_loc:
+            kn = k_nearest(vehicle, release_set, alg_data.settings.k_anonymity, g)
+            neighbors = [e.id for e in kn]
 
-        if vehicle.last_confusion_time != interval.end_at and uncertainty_release_set >= alg_data.settings.uncertainty_threshold:
-            print("U neighbors", vehicle.id, uncertainty_release_set)
-            vehicle.last_confusion_time = interval.end_at
+            if vehicle.last_confusion_time != interval.end_at:
+                uncertainty_release_set = uncertainty(vehicle.predicted_loc, kn, g, alg_data.settings)
+                release_entry.uncertainty_release_set = float("{:.3f}".format(uncertainty_release_set))
+                release_entry.vehicle_entry.neighbors = neighbors
+
+            if vehicle.last_confusion_time != interval.end_at and uncertainty_release_set >= alg_data.settings.uncertainty_threshold:
+                print("U neighbors", vehicle.id, uncertainty_release_set)
+                vehicle.last_confusion_time = interval.end_at
 
     return release_interval_store
 
@@ -361,7 +363,7 @@ def k_nearest(vehicle: IntervalVehicleEntry, vehicles: List[IntervalVehicleEntry
     # distances = [(g.inv(vehicle.current_gps_sample.location.longitude, vehicle.current_gps_sample.location.latitude,
     #                     v.current_gps_sample.location.longitude, v.current_gps_sample.location.latitude)[2], v)
     #              for v in vehicles if v.id != vehicle.id]
-    distances = [(g.inv(vehicle.current_gps_sample.location.longitude, vehicle.current_gps_sample.location.latitude,
+    distances = [(g.inv(vehicle.predicted_loc.longitude, vehicle.predicted_loc.latitude,
                         v.current_gps_sample.location.longitude, v.current_gps_sample.location.latitude)[2], v)
                  for v in vehicles]
 
