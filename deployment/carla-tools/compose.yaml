@@ -22,7 +22,8 @@ services:
       dockerfile: ./deployment/carla-tools/carla-tools.dockerfile
     tty: true
     secrets:
-      - carla_ssh_key
+      - source: carla_ssh_key
+        mode: 0400
     expose:
       - ${CARLA_PORT_BASE:?error}
       - ${CARLA_PORT_SECOND:?error}
