@@ -1,0 +1,47 @@
+# This module contains all services needed to run
+# the temporal_cloaking in development mode (i.e. the python flask
+# servers are running in debug mode with hot reloading).
+# 
+# WARNING: this is a prototype, no production configuration is included.
+version: '3.8'
+services:
+  temporal_client:
+    build:
+      context: ../../src/temporal_cloaking
+      dockerfile: ../../deployment/temporal_cloaking/dockerfile
+    depends_on:
+      - carla_generate_traffic
+      - temporal_cloaking
+    volumes:
+      - "../../src/temporal_cloaking/modules/temporal_client/:/code"
+    ports:
+      - ${TEMPORAL_CLOAKING_CLIENT_PORT:-5000}:5000
+    environment:
+      - CARLA_URL=${CARLA_HOST:?error}
+      - CARLA_PORT=${CARLA_PORT_BASE:?error}
+      - TEMPORAL_CLOAKING_URL=http://temporal_cloaking:5000
+
+  temporal_cloaking:
+    build:
+      context: ../../src/temporal_cloaking
+      dockerfile: ../../deployment/temporal_cloaking/dockerfile
+    depends_on:
+      - temporal_location_based_service
+    volumes:
+      - "../../src/temporal_cloaking/modules/temporal_cloaking/:/code"
+    environment:
+      - LOCATION_SERVER_URL=http://temporal_location_based_service:5000
+    ports:
+      - ${TEMPORAL_CLOAKING_TEMPORAL_CLOAKING_PORT:-5001}:5000 # browser must be able to access it
+    
+  temporal_location_based_service:
+    build:
+      context: ../../src/temporal_cloaking
+      dockerfile: ../../deployment/temporal_cloaking/dockerfile
+    depends_on:
+      - carla_generate_traffic
+    ports:
+      - ${TEMPORAL_CLOAKING_LOCATION_BASED_SERVICE_PORT:-5002}:5000 # browser must be able to access it
+    volumes:
+      - "../../src/temporal_cloaking/modules/temporal_location_based_service/:/code"
+

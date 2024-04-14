@@ -1,6 +1,6 @@
 # Dockerfile for the setup containers
 # Expected context: ./ (root of the repository)
-FROM python:3.8-bookworm
+FROM --platform=linux/amd64 python:3.8-bookworm
 WORKDIR /code
 ENV PYTHONPATH=/code/src
 COPY requirements.txt requirements.txt

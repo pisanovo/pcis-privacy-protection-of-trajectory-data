@@ -19,7 +19,7 @@ class Dummy:
         self.Assigned_User = None
         self.Used_Freq = 0
         # ignore SP_List for now, because the prototype only knows of one service
-        self.Curr_Node = None
+        self.Curr_Node = 0
         self.Node_List = []
     
     def insert_node(self, node):

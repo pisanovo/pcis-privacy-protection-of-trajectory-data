@@ -26,16 +26,14 @@ services:
       context: ../../src/echo_agent
       dockerfile: ../../deployment/echo_agent/dockerfile
     depends_on:
-      - echo_db
       - location_based_service
-    # somehow need to wait until db is ACTUALLY ready and not just healthy.
     volumes:
       - "../../src/echo_agent/modules/echo_agent/:/code"
+      - "echo_agent_storage:/storage:rw"
     environment:
       - LOCATION_SERVER_URL=http://location_based_service:5000
-      - ECHO_DB_HOST=echo_db
-      - ECHO_DB_USER=echo_agent
       - NUMBER_OF_DUMMIES=3
+      - STORAGE_PATH=/storage
     ports:
       - ${ECHO_AGENT_ECHO_AGENT_PORT:-5001}:5000 # browser must be able to access it
     
@@ -50,21 +48,5 @@ services:
     volumes:
       - "../../src/echo_agent/modules/location_based_service/:/code"
 
-  echo_db:
-    image: mongo
-    restart: always
-    secrets:
-       - db_root_password
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: root
-      MONGO_INITDB_ROOT_PASSWORD_FILE: /run/secrets/db_root_password
-    # Exposes default port 27017
-    volumes:
-      - echo_db_volume:/data/db
-
-secrets:
-   db_root_password:
-     file: ${DB_ROOT_PASSWORD_FILE:?error}
-
 volumes:
-  echo_db_volume:
+  echo_agent_storage:

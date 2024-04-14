@@ -25,7 +25,7 @@ class LocationServerConfig:
 
 
 class VisualizationServerConfig:
-    LISTEN_HOST = "127.0.0.1"
+    LISTEN_HOST = os.getenv('CARLA_VISUALIZATION_BACKEND_LISTEN_HOST') or "127.0.0.1"
 
 
 # Carla config (not used at the moment since multiple connections to one Carla instance can be buggy...)
