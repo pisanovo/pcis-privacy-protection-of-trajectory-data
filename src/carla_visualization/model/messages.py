@@ -18,6 +18,7 @@ class MsgClientVsPositionRequest(Message):
     agent_id: int
     type = "PositionRequest"
 
+
 @dataclass
 class MsgVsClientPositionResponse(Message):
     x: float

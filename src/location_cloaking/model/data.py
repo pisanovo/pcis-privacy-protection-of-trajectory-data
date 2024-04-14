@@ -5,6 +5,8 @@ from dataclasses import dataclass
 #
 # Generic
 #
+
+# Specifies the location of a vehicle
 @dataclass
 class Position:
     x: float
@@ -16,6 +18,7 @@ class Group:
     id: int
 
 
+# Determines the area vehicles are driving in and used by the algorithm
 @dataclass
 class GranularityPlaneDimensions:
     width: float
@@ -33,9 +36,6 @@ class GranularityPlaneDimensions:
 #
 # User
 #
-USER_LOC_UNDEFINED = -1
-
-
 @dataclass
 class UserLocation:
     granule: int

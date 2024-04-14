@@ -12,7 +12,7 @@ Note:
 - See osm_to_xodr.py for instructions on how to obtain a valid open drive file for Carla
 """
 
-MAP_PATH = "/code/src/location_cloaking/utils/map/map_files/map_uni_stuttgart_and_vaihingen.xodr"
+MAP_PATH = "../map/map_files/map_uni_stuttgart_and_vaihingen.xodr"
 
 client = carla.Client(CarlaConfig.HOST, CarlaConfig.PORT)
 # Long timeout since loading map may take some time, where carla remains unresponsive

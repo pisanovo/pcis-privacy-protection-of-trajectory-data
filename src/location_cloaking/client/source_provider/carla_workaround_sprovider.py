@@ -7,13 +7,17 @@ from location_cloaking.client.model.data import Position, ClientInstance, Vicini
 
 
 class CarlaWorkaroundSourceProvider(SourceProvider):
+    """
+    We encountered an issue where our algorithms would not work with more than one connection open to the Carla instance,
+    therefore this workaround provider was implemented enabling shared use of one connection to the Carla instance
+    """
 
     def __init__(self, source_instance_data: dict):
         self._carla_id = source_instance_data["id"]
 
     async def get_latest_position(self) -> Position:
         from location_cloaking.config import LocationServerConfig
-        uri = f"ws://{LocationServerConfig.LISTEN_HOST}:8200/carla/position"
+        uri = f"ws://{LocationServerConfig.LISTEN_HOST}:{LocationServerConfig.LISTEN_PROXY_PORT}/carla/position"
 
         async with websockets.connect(uri) as websocket:
             await websocket.send(MsgClientVsPositionRequest(

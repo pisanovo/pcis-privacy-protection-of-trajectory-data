@@ -1,8 +1,8 @@
 # from __future__ import annotations
 from dataclasses import dataclass
-from typing import Optional, List
-
-from location_cloaking.model.data import GranularityPlaneDimensions, EncryptedGranularityLevel
+from typing import List
+from location_cloaking.location_server.model.data import UserSync
+from location_cloaking.model.data import GranularityPlaneDimensions
 from location_cloaking.model.messages import MsgIncrementalUpdate, Message, MessageError
 
 
@@ -49,26 +49,20 @@ class MsgLSObserverIncUpd(MsgIncrementalUpdate):
 
 
 @dataclass
-class UserSync:
-    user_id: int
-    alias: List[str]
-    level: int
-    granularities: List[EncryptedGranularityLevel]
-    vicinity_shape: dict
-
-
-# TODO: Implement sync dataclass
-@dataclass
 class MsgLSObserverSync(Message):
     users: List[UserSync]
     type: str = "MsgLSObserverSync"
 
 
+# Vehicle y enters vicinity area of vehicle x
 @dataclass
 class MsgLSObserverProximity(Message):
+    # true: enter, false: leave
     proximity_enter: bool
+    # vehicle x
     user_affected_id: int
     user_affected_alias: List[str]
+    # vehicle y
     user_entered_id: int
     user_entered_alias: List[str]
     group_id: int
@@ -79,8 +73,6 @@ class MsgLSObserverProximity(Message):
 # Fault
 # Always Location Server to Client (User/Observer)
 #
-
-
 @dataclass
 class MsgErrorProcessCommand(MessageError):
     type: str = "MsgErrorProcessCommand"

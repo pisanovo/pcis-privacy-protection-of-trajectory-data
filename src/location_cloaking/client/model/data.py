@@ -8,7 +8,9 @@ from location_cloaking.model.data import Position
 class ClientInstance:
     source_data: any
     alias: list[str]
+    # Max levels for a vehicles this client instance processes
     policy: Policy
+    # Joined groups for the vehicles specified in the client config
     group_ids: list[int]
 
 
@@ -22,6 +24,7 @@ class VicinityCircleShape(VicinityShape):
     radius: float
 
 
+# Unimplemented
 @dataclass
 class VicinityPolyShape(VicinityShape):
     # Polygon points around an agent which is at position (0,0)
