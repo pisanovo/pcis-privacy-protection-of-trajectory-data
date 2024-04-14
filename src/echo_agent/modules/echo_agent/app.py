@@ -1,8 +1,6 @@
 import os
 from flask import Flask, json, request, Response
 import requests
-from pymongo import MongoClient
-from pymongo.errors import ConnectionFailure
 import dummy_storage
 import dummy_generator
 import user_movement_storage
@@ -14,23 +12,12 @@ cors = CORS(api)
 
 # Get env variables
 LOCATION_SERVER_URL = os.getenv('LOCATION_SERVER_URL')
-ECHO_DB_HOST = os.getenv('ECHO_DB_HOST')
-ECHO_DB_USER = os.getenv('ECHO_DB_USER')
-
-# Connect to mysql db
-echo_db = MongoClient(ECHO_DB_HOST, 27017) # Default port
 
 # Healthcheck. Responds with { "status": "ok" } if it, and all 
 # services down the line are ok.
 @api.route('/health', methods=['GET'])
 def get_health():
   healthy = True
-  # Test connection to db server
-  try:
-    echo_db.admin.command('ping')
-  except ConnectionFailure:
-      healthy = False
-
   # Test connection to location server
   location_server_response = requests.get(LOCATION_SERVER_URL + '/health')
   location_server_status = location_server_response.json()['status']
@@ -62,7 +49,7 @@ def get_anonymous_resource():
     for dummy_location in dummy_locations:
       requests.get(
         LOCATION_SERVER_URL + '/service',
-        params={'x': dummy_location['x'], 'y': dummy_location['y']}
+        params={'x': dummy_location.x, 'y': dummy_location.y}
       )
     # Forward real response, in this case, if service returned ok
     if response.ok:
