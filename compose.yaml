@@ -4,4 +4,7 @@
 version: '3.8'
 include:
   - ./deployment/carla-tools/compose.yaml
-  - ./deployment/echo_agent/compose.yaml
+  # Uncomment only the module you want to use
+  # (carla server might break if you use all of them at the same time)
+  # - ./deployment/echo_agent/compose.yaml
+  - ./deployment/temporal_cloaking/compose.yaml
