@@ -16,6 +16,7 @@ class CarData:
         self.if_ego = if_ego
 cars_position = []
 end_info_flag = 0
+active_agents = []
 
 # longitude and latitude of the selected area
 lon_min = 9.07962801
@@ -41,8 +42,6 @@ vicinity_cnt = 0
 # location of ego vehicle
 ego_x = 0
 ego_y = 0
-
-active_agents = []
 
 api = Flask(__name__)
 cors = CORS(api)
@@ -84,10 +83,6 @@ def get_anonymous_resource():
   if id != "end":
     if id not in active_agents:
       active_agents.append(id)
-    else:
-      active_agents.clear()
-      active_agents.append(id)
-      cars_position.clear()
     x = float(request.args.get('x'))
     y = float(request.args.get('y'))
     if_ego = int(request.args.get('if_ego'))
@@ -100,7 +95,12 @@ def get_anonymous_resource():
     eat_buffer=request.args.get('y')
     eat_buffer=request.args.get('if_ego')
     eat_buffer=request.args.get('service_name')
-    end_info_flag = 1
+
+    if len(cars_position) == len(active_agents):
+      end_info_flag = 1
+    else:
+      cars_position.clear()
+      return "not valid car info"
   #api.logger.info(cars_position[0].id)
   
 
