@@ -53,7 +53,7 @@ This algorithm expects the following things:
     - temporal_cloaking, mongo_db, location_based_service. Is called by the client's healthcheck.
     
 `[GET]/anonymous_resource?id=<client id>&x=<client x coordinate>&y=<client y coordinate>&if_ego=<if client is ego>&service_name=service`:
-    This is the route the client calls to reach the location based service anonymously. It passes a disclosed grid area and the name of the service.
+    This is the route the client calls to reach the location based service anonymously. It passes all cars' info and the name of the service.
     However, as this is a prototype and only one service exists, the service name is always service.
 
 `[POST]/getK?constraint_k=<number>`: 
