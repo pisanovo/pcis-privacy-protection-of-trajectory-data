@@ -1,5 +1,7 @@
 # Privacy Protection of trajectory data
 
+
+
 This project contains multiple algorithms
 that can anonymize car trajoctory data.
 
