@@ -1,5 +1,13 @@
 # Privacy Protection of trajectory data
 
+# Contributions from Vincenzo Pisano
+
+- Backend general structure/skeleton/interfaces, i.e., preparing the project for the other two team members. 
+- complete implementation of src/location_cloaking
+- complete implementation of src/path_confusion
+- complete implementation of carla_visualization
+
+The end result (including Frontend) can be seen by accessing the links in my CV under projects > "Fullstack Anwendung, Master Projekt Data Intensive Computing", Video 1 and Video 2.
 
 
 This project contains multiple algorithms
